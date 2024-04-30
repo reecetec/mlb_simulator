@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
@@ -70,14 +73,13 @@ def create_table(table_name = 'Statcast'):
     conn.close()
     logger.info(f'Creation successful for {table_name}')
 
-def update_table(table_name):
+def update_statcast_table():
 
     if not Path(DB_LOCATION).exists():
         logger.critical('mlb.db doesnt exist, something went wrong in the creation')
         exit()
 
     validate_schema_path()
-    table_schema = get_table_schema(table_name)
 
     engine = create_engine(f'sqlite:///{DB_LOCATION}', echo=False)
     max_date = pd.read_sql('select max(game_date) from Statcast',engine)['max(game_date)'][0]
@@ -86,7 +88,7 @@ def update_table(table_name):
     today = datetime.today().strftime('%Y-%m-%d')
     # if no data uploaded, get all data from 2017 to today.
     if max_date==None:
-        df = statcast('2017-01-01', '2020-01-01')#today)
+        df = statcast('2017-01-01', '2020-01-01', verbose=False)#today)
         if not df.empty:
 
             # drop garbage
@@ -105,7 +107,7 @@ def update_table(table_name):
     else:
         max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d')
         key_date = (datetime.strptime(max_date, '%Y-%m-%d') - timedelta(days=5)).strftime('%Y-%m-%d')
-        df = statcast(max_date, today)
+        df = statcast(max_date, today, verbose=False)
         if not df.empty:
             # drop garbage
             df.drop(columns=['pitcher.1','fielder_2.1'], errors='ignore', inplace=True)
@@ -124,16 +126,16 @@ def update_table(table_name):
 def main():
     logger.info('Starting SQLite db creation/updates')
 
-    #For each table in the list, create the table and/or update it
+    #For each table in the list, make sure it is created with desired schema
     required_tables = ['Statcast']
-
     for table in required_tables:
         create_table(table)
-        logger.info(f'Updating {table}')
-        update_table(table)
 
+    #run update function on each table
+    logger.info(f'Updating Statcast')
+    update_statcast_table()
+    
     logger.info('DB creation and updates complete')
-
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

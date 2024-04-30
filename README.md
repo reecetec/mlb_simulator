@@ -4,9 +4,13 @@ MLB Game Simulator
 Simulate MLB matchup results
 
 TODO:
-- Transfer over old files to this project, adjusting to the format
-- Set up data in sqlite db using old scripts
-- Start to develop model...
+- Develop model for batter outcomes given pitch characteristics/game state
+    - Find features which are important for batters outcomes (https://www.kaggle.com/code/ceshine/feature-importance-from-a-pytorch-model)
+    - Validate model is better than simple multinomial via likelihood
+- Develop model for pitcher pitch characteristics (features of batter model) given game state, AB state, batter weaknesses
+    - can look at using a sequential prediction model like an RNN, LSTM..
+- Build backtest engine (somehow get props)
+- Start to build out game simulator
 
 Project Organization
 ------------
