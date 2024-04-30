@@ -1,13 +1,13 @@
 import sys
 
-REQUIRED_PYTHON = "python"
+REQUIRED_PYTHON = "python3"
 
 
 def main():
     system_major = sys.version_info.major
-    if REQUIRED_PYTHON == "python":
+    if REQUIRED_PYTHON == "python3":
         required_major = 3
-    elif REQUIRED_PYTHON == "python3":
+    elif REQUIRED_PYTHON == "python":
         required_major = 2
     else:
         raise ValueError("Unrecognized python interpreter: {}".format(
