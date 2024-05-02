@@ -2,6 +2,9 @@
 from pathlib import Path
 from sqlalchemy import create_engine
 import pandas as pd
+import pkgutil
+import os
+import dotenv
 
 def get_db_locations(max_depth=10):
     """Gets path for db file
@@ -15,25 +18,20 @@ def get_db_locations(max_depth=10):
     Returns:
         strings: paths to database and table_schema json
     """
+
+    DB_PATH = '/home/reece/sports/mlb_simulator/data/databases/mlb.db'
+    TABLE_SCHEMA_PATH = '/home/reece/sports/mlb_simulator/data/databases/table_schema.json'
     
-    current_dir = Path(__file__).resolve().parent
+    #project_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+    #dotenv_path = os.path.join(project_dir, '.env')
+    #dotenv.load_dotenv(dotenv_path)
 
-    for _ in range(max_depth):
-        if (current_dir / 'README.md').exists():
-            break
-        current_dir = current_dir.parent
-    else:
-        raise FileNotFoundError("README.md not found within the specified depth.")
-
-    # Append path to db to parent dir
-    db_path = current_dir / 'data' / 'databases' / 'mlb.db'
-    table_schema_path = current_dir / 'data' / 'databases' / 'table_schema.json'
-
-    return db_path, table_schema_path
+    return DB_PATH, TABLE_SCHEMA_PATH #os.environ.get("DB_PATH"), os.environ.get("TABLE_SCHEMA_PATH")
 
 def query_mlb_db(query_str):
     try:
         db_path, _ = get_db_locations()
+        print(db_path)
         engine = create_engine(f'sqlite:///{db_path}', echo=False)
         df = pd.read_sql(query_str, engine)
         return df

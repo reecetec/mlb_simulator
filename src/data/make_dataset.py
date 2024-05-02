@@ -121,7 +121,7 @@ def update_statcast_table():
             upload_df.to_sql('Statcast', engine, if_exists='append', index=False,
                       chunksize=1000)
             
-        logger.info('Successfully updated statcast data')
+        logger.info(f'Successfully uploaded {len(upload_df)} rows to table Statcast')
 
 
 def main():
@@ -136,7 +136,7 @@ def main():
     logger.info(f'Updating Statcast')
     update_statcast_table()
     
-    logger.info('DB creation and updates complete')
+    logger.info('DB creation/updates complete')
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
