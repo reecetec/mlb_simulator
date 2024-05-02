@@ -95,7 +95,7 @@ def update_statcast_table():
             df = df.drop(columns=['pitcher.1','fielder_2.1'], errors='ignore')
 
             # ensure no duplicates
-            cur_keys = pd.read_sql('select game_date, game_pk, at_bat_number, pitch_number from statcast', engine)
+            cur_keys = pd.read_sql('select game_date, game_pk, at_bat_number, pitch_number from Statcast', engine)
             key_match_df = pd.merge(df, cur_keys, how='inner', on=['game_date', 'game_pk', 'at_bat_number', 'pitch_number'])
             df.drop(key_match_df.index, inplace=True)
 
@@ -106,20 +106,21 @@ def update_statcast_table():
     # otherwise, get all data from 
     else:
         max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d')
-        key_date = (datetime.strptime(max_date, '%Y-%m-%d') - timedelta(days=5)).strftime('%Y-%m-%d')
+        key_date = (datetime.strptime(max_date, '%Y-%m-%d') - timedelta(days=2)).strftime('%Y-%m-%d')
         df = statcast(max_date, today, verbose=False)
         if not df.empty:
             # drop garbage
             df.drop(columns=['pitcher.1','fielder_2.1'], errors='ignore', inplace=True)
 
             # ensure no duplicates
-            cur_keys = pd.read_sql(f'select game_date, game_pk, at_bat_number, pitch_number from statcast where game_date > {key_date}', engine)
+            cur_keys = pd.read_sql(f'select game_date, game_pk, at_bat_number, pitch_number from Statcast where game_date > {key_date}', engine)
             cur_keys['game_date'] = pd.to_datetime(cur_keys['game_date'])
-            key_match_df = pd.merge(df, cur_keys, how='inner', on=['game_date', 'game_pk', 'at_bat_number', 'pitch_number'])
-            df.drop(key_match_df.index, inplace=True)
+            merged = pd.merge(df,cur_keys,how='outer',indicator=True)
+            upload_df = merged.loc[merged["_merge"] == "left_only"].drop("_merge", axis=1)
 
-            df.to_sql('Statcast', engine, if_exists='append', index=False,
+            upload_df.to_sql('Statcast', engine, if_exists='append', index=False,
                       chunksize=1000)
+            
         logger.info('Successfully updated statcast data')
 
 
