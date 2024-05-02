@@ -48,7 +48,7 @@ class SQLiteDataset(Dataset):
     def __getitem__(self, idx):
         row = self.encoded_data.iloc[idx]
         features = torch.tensor(row.iloc[self.num_target_classes:].values, dtype=torch.float32)
-        label = torch.tensor(row.iloc[0:self.num_target_classes], dtype=torch.long)
+        label = torch.tensor(row.iloc[0:self.num_target_classes], dtype=torch.float32)
         return features, label
     
     #methods to map to labels

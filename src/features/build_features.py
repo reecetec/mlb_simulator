@@ -27,9 +27,8 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     select type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
     from Statcast 
     where batter={batter_id}
-    limit 100;
+    order by game_date asc
     """
-    #order by game_date asc
 
     #create pytorch dataset
     dataset = SQLiteDataset(query_str)
@@ -38,7 +37,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     train_set, val_set = train_test_split(dataset, test_size=0.25, shuffle=False)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
-    val_dataloader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
+    val_dataloader = DataLoader(val_set, batch_size=len(val_set), shuffle=False)
 
     print('Dataset loaded')
 
