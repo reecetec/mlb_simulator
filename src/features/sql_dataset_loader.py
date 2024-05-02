@@ -27,9 +27,10 @@ class SQLiteDataset(Dataset):
 
         self.one_hot = OneHotEncoder(sparse_output=False)
         self.target_col = self.raw_data.columns[0]
-        target_encoded = self.one_hot.fit_transform(self.raw_data[[self.target_col]])
 
+        target_encoded = self.one_hot.fit_transform(self.raw_data[[self.target_col]])
         target_names = self.one_hot.get_feature_names_out([self.target_col])
+        
         self.num_target_labels = len(target_names)
 
         target_encoded_df = pd.DataFrame(target_encoded, columns=target_names)

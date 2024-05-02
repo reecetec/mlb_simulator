@@ -12,6 +12,9 @@ from data.data_utils import query_mlb_db
 from features.sql_dataset_loader import SQLiteDataset
 import torch
 from torch.utils.data import DataLoader
+from sklearn.model_selection import train_test_split
+
+
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     pitch_characteristics = '''pitch_type, release_speed, release_spin_rate, release_extension, release_pos_x, release_pos_y,
@@ -28,13 +31,17 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
 
     #create pytorch dataset
     dataset = SQLiteDataset(query_str)
-    dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
 
-    return dataloader
+    #ensure shuffle is false -> uses oldest data.
+    train_set, val_set = train_test_split(dataset, test_size=0.25, shuffle=False)
 
-    #dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
+    val_dataloader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
-    #return dataloader
+    #dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
+
+    return train_dataloader, val_dataloader
+
 
 def get_pitch_generation_features():
     pass
@@ -49,7 +56,7 @@ def feature_class_mapping():
     return 
 
 if __name__ == '__main__':
-    
-    for features, labels in get_pitch_outcome_dataset(665489,batch_size=5):
+    train_dataloader, val_dataloader = get_pitch_outcome_dataset(665489,batch_size=2)
+    for features, labels in train_dataloader:
         print(f'first batch features: {features}\n\n first batch labels: {labels}')
         break

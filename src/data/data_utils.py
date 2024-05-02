@@ -31,7 +31,6 @@ def get_db_locations(max_depth=10):
 def query_mlb_db(query_str):
     try:
         db_path, _ = get_db_locations()
-        print(db_path)
         engine = create_engine(f'sqlite:///{db_path}', echo=False)
         df = pd.read_sql(query_str, engine)
         return df
