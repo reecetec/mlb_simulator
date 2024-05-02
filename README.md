@@ -17,6 +17,11 @@ TODO:
 - Additional models will be needed for lineup swaps, pitcher swaps, etc.
     - Can start with first 5 inning picks...
 
+
+- MlB analytics teams train pitchers where to throw based on batter weaknesses
+- Will need to adjust for this
+- up and comers are receptive, older players are not
+
 Project Organization
 ------------
 
