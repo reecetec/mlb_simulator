@@ -11,7 +11,6 @@ sys.path.append(parent_dir)
 from data.data_utils import query_mlb_db
 from features.sql_dataset_loader import SQLiteDataset
 import torch
-from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
@@ -23,13 +22,15 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     select type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
     from Statcast 
     where batter={batter_id}
-    limit 10;
+    limit 100;
     """
     #order by game_date asc
 
+    #create pytorch dataset
     dataset = SQLiteDataset(query_str)
+    dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
 
-    return dataset
+    return dataloader
 
     #dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
@@ -48,4 +49,7 @@ def feature_class_mapping():
     return 
 
 if __name__ == '__main__':
-    print(get_pitch_outcome_dataset(665489).head())
+    
+    for features, labels in get_pitch_outcome_dataset(665489,batch_size=5):
+        print(f'first batch features: {features}\n\n first batch labels: {labels}')
+        break
