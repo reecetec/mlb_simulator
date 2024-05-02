@@ -14,6 +14,8 @@ import torch
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
@@ -32,15 +34,15 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     #create pytorch dataset
     dataset = SQLiteDataset(query_str)
 
-    #ensure shuffle is false -> uses oldest data.
+    #ensure shuffle is false -> uses oldest data for training, newest for val.
     train_set, val_set = train_test_split(dataset, test_size=0.25, shuffle=False)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
     val_dataloader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
-    #dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
+    print('Dataset loaded')
 
-    return train_dataloader, val_dataloader
+    return train_dataloader, val_dataloader, dataset.num_features, dataset.num_target_classes
 
 
 def get_pitch_generation_features():
@@ -56,7 +58,8 @@ def feature_class_mapping():
     return 
 
 if __name__ == '__main__':
-    train_dataloader, val_dataloader = get_pitch_outcome_dataset(665489,batch_size=2)
+    train_dataloader, val_dataloader, num_features, num_classes = get_pitch_outcome_dataset(665489,batch_size=2)
     for features, labels in train_dataloader:
+        print(f'num features: {num_features} and num classes: {num_classes}')
         print(f'first batch features: {features}\n\n first batch labels: {labels}')
         break

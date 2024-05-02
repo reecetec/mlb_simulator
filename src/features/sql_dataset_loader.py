@@ -20,6 +20,7 @@ class SQLiteDataset(Dataset):
         #load query
         print('Loading dataset...')
         self.raw_data = query_mlb_db(query)
+        self.num_features = len(self.raw_data.columns) - 1
         
         #get categorical columns
         print('Converting labels to integers...')
@@ -27,11 +28,9 @@ class SQLiteDataset(Dataset):
 
         self.one_hot = OneHotEncoder(sparse_output=False)
         self.target_col = self.raw_data.columns[0]
-
         target_encoded = self.one_hot.fit_transform(self.raw_data[[self.target_col]])
         target_names = self.one_hot.get_feature_names_out([self.target_col])
-        
-        self.num_target_labels = len(target_names)
+        self.num_target_classes = len(target_names)
 
         target_encoded_df = pd.DataFrame(target_encoded, columns=target_names)
         
@@ -48,8 +47,8 @@ class SQLiteDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.encoded_data.iloc[idx]
-        features = torch.tensor(row[self.num_target_labels:].values, dtype=torch.float32)
-        label = torch.tensor(row[0:self.num_target_labels], dtype=torch.long)
+        features = torch.tensor(row.iloc[self.num_target_classes:].values, dtype=torch.float32)
+        label = torch.tensor(row.iloc[0:self.num_target_classes], dtype=torch.long)
         return features, label
     
     #methods to map to labels
