@@ -3,6 +3,8 @@ MLB Game Simulator
 
 Simulate MLB matchup results
 
+ICE PLOTS -> VISUALIZE HOW OUTPUT CHANGES WHEN INPUT DOES?
+
 TODO:
 - Develop each individual model:
     - Pitch generation
