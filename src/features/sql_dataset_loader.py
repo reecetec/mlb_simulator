@@ -19,15 +19,12 @@ class SQLiteDataset(Dataset):
     def __init__(self, query):
         
         #load query
-        print('Loading dataset...')
         self.raw_data = query_mlb_db(query)
-        self.num_features = len(self.raw_data.columns) - 1
         
         #set target col (should always be first col in query)
         self.target_col = self.raw_data.columns[0]
 
         #get categorical columns
-        print('Converting labels to integers...')
         self.cat_columns = self.get_object_columns()
         #one hot the target, as well as the pitch type.
         self.one_hot_columns = [self.target_col, 'pitch_type']
@@ -61,10 +58,12 @@ class SQLiteDataset(Dataset):
             self.raw_data[col] = le.fit_transform(self.raw_data[col])
             self.label_encoders[col] = copy.deepcopy(le)
 
-        #self.encoded_data = pd.concat([target_encoded_df, self.raw_data.drop(self.target_col, axis=1)], axis=1)
+        #get the encoded data
         self.encoded_data = pd.concat(list(self.one_hot_encoded_dfs.values()) + 
                                  [self.raw_data.drop(self.one_hot_columns, axis=1)]
                                 , axis=1)
+        #input layer size for input to nn
+        self.input_layer_size = len(self.encoded_data.columns) - self.num_target_classes
 
     def __len__(self):
         return len(self.encoded_data)

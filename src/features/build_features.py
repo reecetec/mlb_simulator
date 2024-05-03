@@ -14,11 +14,18 @@ import torch
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 
+import logging
+
+logger = logging.getLogger(__name__)
+log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
+
     pitch_characteristics = '''pitch_type, release_speed, release_spin_rate, release_extension, release_pos_x, release_pos_y,
                                 release_pos_z, pfx_x, pfx_z, plate_x, plate_z, vx0, vy0, vz0, ax, ay, az, zone, sz_top, sz_bot'''
     pitcher_characteristics = 'p_throws'
@@ -31,8 +38,20 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     limit 100
     """
 
+    query_str = f"""
+        SELECT type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
+        FROM Statcast 
+        WHERE batter={batter_id} AND pitch_type IS NOT NULL AND release_speed IS NOT NULL AND release_spin_rate IS NOT NULL AND release_extension IS NOT NULL AND release_pos_x IS NOT NULL AND release_pos_y IS NOT NULL AND release_pos_z IS NOT NULL AND pfx_x IS NOT NULL AND pfx_z IS NOT NULL AND plate_x IS NOT NULL AND plate_z IS NOT NULL AND vx0 IS NOT NULL AND vy0 IS NOT NULL AND vz0 IS NOT NULL AND ax IS NOT NULL AND ay IS NOT NULL AND az IS NOT NULL AND zone IS NOT NULL AND sz_top IS NOT NULL AND sz_bot IS NOT NULL AND p_throws IS NOT NULL AND pitch_number IS NOT NULL AND strikes IS NOT NULL AND balls IS NOT NULL AND outs_when_up IS NOT NULL AND (bat_score - fld_score) IS NOT NULL
+        ORDER BY game_date, at_bat_number ASC
+    """
+
+
+    logger.info(f'Loading dataset for {batter_id}')
+
     #create pytorch dataset
     dataset = SQLiteDataset(query_str)
+
+    logger.info(f'Data successfully queried/transformed for {batter_id}')
 
     #ensure shuffle is false -> uses oldest data for training, newest for val.
     train_set, val_set = train_test_split(dataset, test_size=0.25, shuffle=False)
@@ -40,9 +59,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
     val_dataloader = DataLoader(val_set, batch_size=len(val_set), shuffle=False)
 
-    print('Dataset loaded')
-
-    return train_dataloader, val_dataloader, dataset.num_features, dataset.num_target_classes, dataset.label_encoders
+    return train_dataloader, val_dataloader, dataset.num_target_classes, dataset.input_layer_size, dataset.label_encoders
 
 
 def get_pitch_generation_features():

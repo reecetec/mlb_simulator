@@ -5,6 +5,8 @@ Simulate MLB matchup results
 
 ICE PLOTS -> VISUALIZE HOW OUTPUT CHANGES WHEN INPUT DOES?
 
+
+
 TODO:
 - Develop each individual model:
     - Pitch generation
@@ -18,7 +20,12 @@ TODO:
     - Run lots of simulations for games, generate box score
 - Additional models will be needed for lineup swaps, pitcher swaps, etc.
     - Can start with first 5 inning picks...
-
+- Steal model:
+    - when this player is on base, find prob of stealing, etc.
+    - use general model for new players, or maybe new players don't steal at all.
+- Build backtester:
+    - https://www.sportsbookreview.com/betting-odds/mlb-baseball/totals/1st-half/
+    - scrape above page -> has first 5 inning totals, etc.
 
 - MlB analytics teams train pitchers where to throw based on batter weaknesses
 - Will need to adjust for this
