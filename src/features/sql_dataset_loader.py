@@ -10,6 +10,7 @@ import torch
 from torch.utils.data import Dataset
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import pandas as pd
+import copy
 
 
 class SQLiteDataset(Dataset):
@@ -22,25 +23,48 @@ class SQLiteDataset(Dataset):
         self.raw_data = query_mlb_db(query)
         self.num_features = len(self.raw_data.columns) - 1
         
+        #set target col (should always be first col in query)
+        self.target_col = self.raw_data.columns[0]
+
         #get categorical columns
         print('Converting labels to integers...')
         self.cat_columns = self.get_object_columns()
+        #one hot the target, as well as the pitch type.
+        self.one_hot_columns = [self.target_col, 'pitch_type']
 
-        self.one_hot = OneHotEncoder(sparse_output=False)
-        self.target_col = self.raw_data.columns[0]
-        target_encoded = self.one_hot.fit_transform(self.raw_data[[self.target_col]])
-        target_names = self.one_hot.get_feature_names_out([self.target_col])
-        self.num_target_classes = len(target_names)
+        #encode categorical values and retain mapping to use later:
+        self.label_encoders = {}
+        self.one_hot_encoded_dfs = {}
 
-        target_encoded_df = pd.DataFrame(target_encoded, columns=target_names)
+        for col in self.one_hot_columns:
+            one_hot = OneHotEncoder(sparse_output=False)
+            target_encoded = one_hot.fit_transform(self.raw_data[[col]])
+            target_names = one_hot.get_feature_names_out([col])
+            target_encoded_df = pd.DataFrame(target_encoded, columns=target_names)
+
+            self.label_encoders[col] = copy.deepcopy(one_hot)
+
+            # save number of classes if this is the target col
+            if col == self.target_col:
+                self.num_target_classes = len(target_names)
+
+            self.one_hot_encoded_dfs[col] = target_encoded_df
         
-        #encode categorical values
-        self.le = LabelEncoder()
-        for col in self.cat_columns:
-            if col != self.target_col: 
-                self.raw_data[col] = self.le.fit_transform(self.raw_data[col])
 
-        self.encoded_data = pd.concat([target_encoded_df, self.raw_data.drop(self.target_col, axis=1)], axis=1)
+        #encode rest of columns regularly
+        for col in self.cat_columns:
+            if col in self.one_hot_columns: 
+                continue
+            
+            le = LabelEncoder()
+
+            self.raw_data[col] = le.fit_transform(self.raw_data[col])
+            self.label_encoders[col] = copy.deepcopy(le)
+
+        #self.encoded_data = pd.concat([target_encoded_df, self.raw_data.drop(self.target_col, axis=1)], axis=1)
+        self.encoded_data = pd.concat(list(self.one_hot_encoded_dfs.values()) + 
+                                 [self.raw_data.drop(self.one_hot_columns, axis=1)]
+                                , axis=1)
 
     def __len__(self):
         return len(self.encoded_data)

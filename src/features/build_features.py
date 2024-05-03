@@ -28,6 +28,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     from Statcast 
     where batter={batter_id}
     order by game_date asc
+    limit 100
     """
 
     #create pytorch dataset
@@ -41,7 +42,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
 
     print('Dataset loaded')
 
-    return train_dataloader, val_dataloader, dataset.num_features, dataset.num_target_classes
+    return train_dataloader, val_dataloader, dataset.num_features, dataset.num_target_classes, dataset.label_encoders
 
 
 def get_pitch_generation_features():
@@ -57,8 +58,9 @@ def feature_class_mapping():
     return 
 
 if __name__ == '__main__':
-    train_dataloader, val_dataloader, num_features, num_classes = get_pitch_outcome_dataset(665489,batch_size=2)
+    train_dataloader, val_dataloader, num_features, num_classes, label_encoders = get_pitch_outcome_dataset(665489,batch_size=2)
     for features, labels in train_dataloader:
         print(f'num features: {num_features} and num classes: {num_classes}')
         print(f'first batch features: {features}\n\n first batch labels: {labels}')
+        print(f'label encoder: {label_encoders}')
         break
