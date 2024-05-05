@@ -3,9 +3,90 @@ MLB Game Simulator
 
 Simulate MLB matchup results
 
-ICE PLOTS -> VISUALIZE HOW OUTPUT CHANGES WHEN INPUT DOES?
+select 
+	case
+		when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' then 'strike'
+		when description='foul' then 'foul'
+		when description='ball' or description='blocked_ball' then 'ball'
+		when description='hit_by_pitch' then 'hit_by_pitch'
+		when description='hit_into_play' then 'hit_into_play'
+		else NULL
+	end as pitch_outcome,
+	
+	p_throws, pitch_number, strikes, balls, outs_when_up,
+	
+	case
+		when bat_score > fld_score then 1
+		when bat_score < fld_score then -1
+		else 0
+	end as is_winning,
+	
+	release_speed, 
+	release_spin_rate, 
+	release_extension,
 
+	release_pos_x,
+	release_pos_y,
+	release_pos_z,
+	
+	spin_axis,
+	pfx_x, pfx_z, 
+	
+	vx0, vy0, vz0,
+	ax, ay, az,
+	plate_x, plate_z
+	
+from Statcast
+where pitch_outcome is not null
+limit 100;
 
+- change to model description as opposed to type. provides better picture.
+
+- remove all bunting. manually impose batter going to bunt.
+    - based on game state, the current batter, is this player going to bunt?
+    - if so, use bunting model.
+    - Else, use non bunting model.
+
+- pitchouts can happen in both. Need to account for when this happens in game state.
+    - pitch model should account for this.
+
+- need to make models "transfer models"
+    - train on general player, use this model to adjust for individual players performance.
+
+- in game sim, have probability that the batter is going to try and bunt. Then run according model:
+    - model 1: pitch_outcome
+    - model 2: pitch_outcome_bunt
+
+- simulation flow:
+    
+    DECIDE_HITTER
+    - Pitcher on mound. 
+    - Batter comes to bat. 
+    
+    SIM_AT_BAT:
+    - Pitcher generates pitch based on game state and current batter (MODEL 1)
+    - Batter decides to either bunt or hit (MODEL 2)
+    - Batter strike, ball, or hits into play (MODEL 3)
+    - Any on base steal? (MODEL 5)
+    - Based on pitch characteristics, given the batter hits into play, what is hit tajectory? (MODEL 4)
+    - Given game state, how does it change? (MODEL 6)
+    - adjust game state. 
+
+        AT_BAT_CHANGE:
+        - if strikes=3, outs += 1
+        - if balls=4, batter.walk()
+        - if outs==3, game.change_inning...
+
+- pitcher class:
+    - p_throws
+    - pitch_arsenal: the pitches he throws often
+    - adjustment_factor: How heavily does he change pitch distribution based on batter
+    - next_pitch_distribution: what is the next pitch_type to be thrown?
+    - pitch_characteristics: generate inputs to batter outcome, based on pitch_type
+    
+- batter class
+    - stands
+    - 
 
 TODO:
 - Develop each individual model:

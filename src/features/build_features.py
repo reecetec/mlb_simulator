@@ -30,6 +30,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
                                 release_pos_z, pfx_x, pfx_z, plate_x, plate_z, vx0, vy0, vz0, ax, ay, az, zone, sz_top, sz_bot'''
     pitcher_characteristics = 'p_throws'
     game_state = 'pitch_number, strikes, balls, outs_when_up, bat_score - fld_score as score_delta'
+    
     query_str = f"""
     select type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
     from Statcast 
@@ -43,6 +44,60 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
         FROM Statcast 
         WHERE batter={batter_id} AND pitch_type IS NOT NULL AND release_speed IS NOT NULL AND release_spin_rate IS NOT NULL AND release_extension IS NOT NULL AND release_pos_x IS NOT NULL AND release_pos_y IS NOT NULL AND release_pos_z IS NOT NULL AND pfx_x IS NOT NULL AND pfx_z IS NOT NULL AND plate_x IS NOT NULL AND plate_z IS NOT NULL AND vx0 IS NOT NULL AND vy0 IS NOT NULL AND vz0 IS NOT NULL AND ax IS NOT NULL AND ay IS NOT NULL AND az IS NOT NULL AND zone IS NOT NULL AND sz_top IS NOT NULL AND sz_bot IS NOT NULL AND p_throws IS NOT NULL AND pitch_number IS NOT NULL AND strikes IS NOT NULL AND balls IS NOT NULL AND outs_when_up IS NOT NULL AND (bat_score - fld_score) IS NOT NULL
         ORDER BY game_date, at_bat_number ASC
+    """
+
+    query_str = f"""
+        select 
+            case
+                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' then 'strike'
+                when description='foul' then 'foul'
+                when description='ball' or description='blocked_ball' then 'ball'
+                when description='hit_by_pitch' then 'hit_by_pitch'
+                when description='hit_into_play' then 'hit_into_play'
+                else NULL
+            end as pitch_outcome,
+            
+            p_throws, pitch_number, strikes, balls, outs_when_up,
+            
+            case
+                when bat_score > fld_score then 1
+                when bat_score < fld_score then -1
+                else 0
+            end as is_winning,
+            
+            release_speed, 
+            release_spin_rate, 
+            release_extension,
+
+            release_pos_x,
+            release_pos_y,
+            release_pos_z,
+            
+            spin_axis,
+            pfx_x, pfx_z, 
+            
+            vx0, vy0, vz0,
+            ax, ay, az,
+            plate_x, plate_z
+            
+        from Statcast
+        where batter={batter_id}
+        and pitch_outcome & p_throws & pitch_number & strikes & balls & outs_when_up & is_winning &
+            release_speed &
+            release_spin_rate &
+            release_extension &
+
+            release_pos_x &
+            release_pos_y &
+            release_pos_z &
+            
+            spin_axis &
+            pfx_x & pfx_z &
+            
+            vx0 & vy0 & vz0 &
+            ax & ay & az &
+            plate_x & plate_z
+        is not null;
     """
 
 
