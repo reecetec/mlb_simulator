@@ -95,7 +95,7 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
 
     return train_dataloader, val_dataloader, dataset.num_target_classes, dataset.input_layer_size, dataset.label_encoders
 
-def get_pitch_outcome_dataset_general(cluster_id, batch_size=32, shuffle=False):
+def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle=False):
     
     cluster_query = f'select batter from BatterStrikezoneCluster where cluster={cluster_id};'
     
@@ -141,6 +141,7 @@ def get_pitch_outcome_dataset_general(cluster_id, batch_size=32, shuffle=False):
             
         from Statcast
         where batter in ({sql_fmt_ids})
+        and stand='{stands}'
         and pitch_outcome & p_throws & pitch_number & strikes & balls & outs_when_up & is_winning &
             release_speed &
             release_spin_rate &
@@ -195,7 +196,7 @@ if __name__ == '__main__':
         #print(f'first batch features: {features}\n\n first batch labels: {labels}')
         #print(f'label encoder: {label_encoders}')
         #break
-    train_dataloader, val_dataloader, num_classes, num_features, label_encoders = get_pitch_outcome_dataset_general(5,batch_size=2)
+    train_dataloader, val_dataloader, num_classes, num_features, label_encoders = get_pitch_outcome_dataset_general(5,stands='R',batch_size=2)
     for features, labels in train_dataloader:
             print(f'num features: {num_features} and num classes: {num_classes}')
             print(f'first batch features: {features}\n\n first batch labels: {labels}')
