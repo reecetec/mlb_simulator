@@ -8,12 +8,9 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from data.data_utils import query_mlb_db
 from features.sql_dataset_loader import SQLiteDataset
-import torch
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,26 +22,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
-
-    pitch_characteristics = '''pitch_type, release_speed, release_spin_rate, release_extension, release_pos_x, release_pos_y,
-                                release_pos_z, pfx_x, pfx_z, plate_x, plate_z, vx0, vy0, vz0, ax, ay, az, zone, sz_top, sz_bot'''
-    pitcher_characteristics = 'p_throws'
-    game_state = 'pitch_number, strikes, balls, outs_when_up, bat_score - fld_score as score_delta'
-    
-    query_str = f"""
-    select type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
-    from Statcast 
-    where batter={batter_id}
-    order by game_date asc
-    limit 100
-    """
-
-    query_str = f"""
-        SELECT type, {pitch_characteristics}, {pitcher_characteristics}, {game_state}
-        FROM Statcast 
-        WHERE batter={batter_id} AND pitch_type IS NOT NULL AND release_speed IS NOT NULL AND release_spin_rate IS NOT NULL AND release_extension IS NOT NULL AND release_pos_x IS NOT NULL AND release_pos_y IS NOT NULL AND release_pos_z IS NOT NULL AND pfx_x IS NOT NULL AND pfx_z IS NOT NULL AND plate_x IS NOT NULL AND plate_z IS NOT NULL AND vx0 IS NOT NULL AND vy0 IS NOT NULL AND vz0 IS NOT NULL AND ax IS NOT NULL AND ay IS NOT NULL AND az IS NOT NULL AND zone IS NOT NULL AND sz_top IS NOT NULL AND sz_bot IS NOT NULL AND p_throws IS NOT NULL AND pitch_number IS NOT NULL AND strikes IS NOT NULL AND balls IS NOT NULL AND outs_when_up IS NOT NULL AND (bat_score - fld_score) IS NOT NULL
-        ORDER BY game_date, at_bat_number ASC
-    """
 
     query_str = f"""
         select 
@@ -97,7 +74,8 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
             vx0 & vy0 & vz0 &
             ax & ay & az &
             plate_x & plate_z
-        is not null;
+        is not null
+        order by game_date asc, at_bat_number asc;
     """
 
 

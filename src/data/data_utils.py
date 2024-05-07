@@ -37,3 +37,13 @@ def query_mlb_db(query_str):
     except Exception as e:
         print(f"Error executing query: {e}")
         return None
+
+
+def get_mlb_db_engine():
+    try:
+        db_path, _ = get_db_locations()
+        engine = create_engine(f'sqlite:///{db_path}', echo=False)
+        return engine
+    except Exception as e:
+        print(f'Error creating engine: {e}')
+        return None

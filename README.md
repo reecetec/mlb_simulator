@@ -3,45 +3,6 @@ MLB Game Simulator
 
 Simulate MLB matchup results
 
-select 
-	case
-		when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' then 'strike'
-		when description='foul' then 'foul'
-		when description='ball' or description='blocked_ball' then 'ball'
-		when description='hit_by_pitch' then 'hit_by_pitch'
-		when description='hit_into_play' then 'hit_into_play'
-		else NULL
-	end as pitch_outcome,
-	
-	p_throws, pitch_number, strikes, balls, outs_when_up,
-	
-	case
-		when bat_score > fld_score then 1
-		when bat_score < fld_score then -1
-		else 0
-	end as is_winning,
-	
-	release_speed, 
-	release_spin_rate, 
-	release_extension,
-
-	release_pos_x,
-	release_pos_y,
-	release_pos_z,
-	
-	spin_axis,
-	pfx_x, pfx_z, 
-	
-	vx0, vy0, vz0,
-	ax, ay, az,
-	plate_x, plate_z
-	
-from Statcast
-where pitch_outcome is not null
-limit 100;
-
-- change to model description as opposed to type. provides better picture.
-
 - remove all bunting. manually impose batter going to bunt.
     - based on game state, the current batter, is this player going to bunt?
     - if so, use bunting model.
@@ -107,10 +68,11 @@ TODO:
 - Build backtester:
     - https://www.sportsbookreview.com/betting-odds/mlb-baseball/totals/1st-half/
     - scrape above page -> has first 5 inning totals, etc.
+    - https://github.com/FinnedAI/sportsbookreview-scraper
 
-- MlB analytics teams train pitchers where to throw based on batter weaknesses
-- Will need to adjust for this
-- up and comers are receptive, older players are not
+- get projected lineups:
+ - https://github.com/fultoncjb/mlb-scraper/tree/master
+
 
 Project Organization
 ------------

@@ -27,7 +27,7 @@ class SQLiteDataset(Dataset):
         #get categorical columns
         self.cat_columns = self.get_object_columns()
         #one hot the target, as well as the pitch type.
-        self.one_hot_columns = [self.target_col, 'pitch_type']
+        self.one_hot_columns = [self.target_col] #, 'pitch_type']
 
         #encode categorical values and retain mapping to use later:
         self.label_encoders = {}
