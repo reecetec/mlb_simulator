@@ -27,9 +27,10 @@ def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
     query_str = f"""
         select 
             case
-                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' then 'strike'
-                when description='foul' then 'foul'
-                when description='ball' or description='blocked_ball' then 'ball'
+                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
+                    or description='swinging_pitchout' then 'strike'
+                when description='foul' or description='foul_pitchout' then 'foul'
+                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
                 when description='hit_by_pitch' then 'hit_by_pitch'
                 when description='hit_into_play' then 'hit_into_play'
                 else NULL
@@ -108,9 +109,10 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
     query_str = f"""
         select 
             case
-                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' then 'strike'
-                when description='foul' then 'foul'
-                when description='ball' or description='blocked_ball' then 'ball'
+                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
+                    or description='swinging_pitchout' then 'strike'
+                when description='foul' or description='foul_pitchout' then 'foul'
+                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
                 when description='hit_by_pitch' then 'hit_by_pitch'
                 when description='hit_into_play' then 'hit_into_play'
                 else NULL
@@ -177,8 +179,71 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
 
     return train_dataloader, val_dataloader, dataset.num_target_classes, dataset.input_layer_size, dataset.label_encoders
 
-def get_pitch_generation_features():
-    pass
+def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
+    # kikuchi: 579328
+    query_str = f"""
+    SELECT 
+        
+        release_speed, release_spin_rate, release_extension,
+        release_pos_x, release_pos_y, release_pos_z,
+        spin_axis, pfx_x, pfx_z,
+        vx0, vy0, vz0,
+        ax, ay, az,
+        plate_x, plate_z,
+        
+        stand, pitch_number, strikes, balls, outs_when_up,
+        CASE
+            WHEN on_1b IS NOT NULL THEN 1
+            ELSE 0
+        END AS on_1b,
+        CASE
+            WHEN on_2b IS NOT NULL THEN 1
+            ELSE 0
+        END AS on_2b,
+        CASE
+            WHEN on_3b IS NOT NULL THEN 1
+            ELSE 0
+        END AS on_3b,
+        CASE
+            WHEN bat_score > fld_score THEN 1
+            WHEN bat_score < fld_score THEN -1
+            ELSE 0
+        END AS is_winning,
+        ROW_NUMBER() OVER (PARTITION BY game_pk ORDER BY game_date, at_bat_number, pitch_number) AS cumulative_pitch_number
+    FROM 
+        Statcast
+    WHERE 
+        pitcher = {pitcher_id} 
+        AND release_speed IS NOT NULL
+        AND release_spin_rate IS NOT NULL
+        AND release_extension IS NOT NULL
+        AND release_pos_x IS NOT NULL
+        AND release_pos_y IS NOT NULL
+        AND release_pos_z IS NOT NULL
+        AND spin_axis IS NOT NULL
+        AND pfx_x IS NOT NULL
+        AND pfx_z IS NOT NULL
+        AND vx0 IS NOT NULL
+        AND vy0 IS NOT NULL
+        AND vz0 IS NOT NULL
+        AND ax IS NOT NULL
+        AND ay IS NOT NULL
+        AND az IS NOT NULL
+        AND plate_x IS NOT NULL
+        AND plate_z IS NOT NULL
+    ORDER BY 
+        game_date ASC, 
+        at_bat_number ASC,
+        pitch_number ASC
+    LIMIT 100;
+    """
+
+    pitch_data_df = query_mlb_db(query_str)
+
+
+    logger.info(f'Loading pitch dataset for pitcher {pitcher_id}')
+    logger.info(f'Data successfully queried/transformed for {pitcher_id}')
+    
 
 def get_bat_outcome_features():
     pass
@@ -198,8 +263,8 @@ if __name__ == '__main__':
         #break
     train_dataloader, val_dataloader, num_classes, num_features, label_encoders = get_pitch_outcome_dataset_general(5,stands='R',batch_size=2)
     for features, labels in train_dataloader:
-            print(f'num features: {num_features} and num classes: {num_classes}')
-            print(f'first batch features: {features}\n\n first batch labels: {labels}')
-            print(f'label encoder: {label_encoders}')
-            print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
-            break
+        print(f'num features: {num_features} and num classes: {num_classes}')
+        print(f'first batch features: {features}\n\n first batch labels: {labels}')
+        print(f'label encoder: {label_encoders}')
+        print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
+        break

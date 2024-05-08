@@ -3,6 +3,11 @@ MLB Game Simulator
 
 Simulate MLB matchup results
 
+PITCH GENERATOR
+- for pitches, make pitch classifier model. 
+- use generator to make pitches with same game state variables as all of the data, and get proportions of each pitch thrown.
+- validate generated pitches follow similar distribution of pitches (hypothesis test)
+
 - remove all bunting. manually impose batter going to bunt.
     - based on game state, the current batter, is this player going to bunt?
     - if so, use bunting model.
