@@ -13,6 +13,7 @@ from features.sql_dataset_loader import SQLiteDataset
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import logging
+import torch
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -191,7 +192,11 @@ def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
         ax, ay, az,
         plate_x, plate_z,
         
-        stand, pitch_number, strikes, balls, outs_when_up,
+        pitch_number, strikes, balls, outs_when_up,
+        CASE 
+            WHEN stand is 'L' THEN 0
+            ELSE 1
+        END as stand,
         CASE
             WHEN on_1b IS NOT NULL THEN 1
             ELSE 0
@@ -240,9 +245,19 @@ def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
 
     pitch_data_df = query_mlb_db(query_str)
 
+    conditioning_cols = ['stand', 'pitch_number', 'strikes', 'balls', 'outs_when_up', 'on_1b',
+                         'on_2b','on_3b','is_winning','cumulative_pitch_number']
+
+    conditioning_df = pitch_data_df[conditioning_cols]
+    non_conditioning_df = pitch_data_df.drop(conditioning_cols, axis=1)
+
+    conditioning_tensor = torch.tensor(conditioning_df.values, dtype=torch.float32)
+    non_conditioning_tensor = torch.tensor(non_conditioning_df.values, dtype=torch.float32)
 
     logger.info(f'Loading pitch dataset for pitcher {pitcher_id}')
     logger.info(f'Data successfully queried/transformed for {pitcher_id}')
+
+    return non_conditioning_tensor, conditioning_tensor
     
 
 def get_bat_outcome_features():
@@ -261,10 +276,11 @@ if __name__ == '__main__':
         #print(f'first batch features: {features}\n\n first batch labels: {labels}')
         #print(f'label encoder: {label_encoders}')
         #break
-    train_dataloader, val_dataloader, num_classes, num_features, label_encoders = get_pitch_outcome_dataset_general(5,stands='R',batch_size=2)
-    for features, labels in train_dataloader:
-        print(f'num features: {num_features} and num classes: {num_classes}')
-        print(f'first batch features: {features}\n\n first batch labels: {labels}')
-        print(f'label encoder: {label_encoders}')
-        print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
-        break
+    #train_dataloader, val_dataloader, num_classes, num_features, label_encoders = get_pitch_outcome_dataset_general(5,stands='R',batch_size=2)
+    #for features, labels in train_dataloader:
+        #print(f'num features: {num_features} and num classes: {num_classes}')
+        #print(f'first batch features: {features}\n\n first batch labels: {labels}')
+        #print(f'label encoder: {label_encoders}')
+        #print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
+        #break
+    get_pitch_generation_features(579328)
