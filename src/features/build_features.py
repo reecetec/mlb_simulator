@@ -180,7 +180,7 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
 
     return train_dataloader, val_dataloader, dataset.num_target_classes, dataset.input_layer_size, dataset.label_encoders
 
-def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
+
     # kikuchi: 579328
     query_str = f"""
     SELECT 
@@ -192,33 +192,15 @@ def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
         ax, ay, az,
         plate_x, plate_z,
         
-        pitch_number, strikes, balls, outs_when_up,
         CASE 
             WHEN stand is 'L' THEN 0
             ELSE 1
         END as stand,
-        CASE
-            WHEN on_1b IS NOT NULL THEN 1
-            ELSE 0
-        END AS on_1b,
-        CASE
-            WHEN on_2b IS NOT NULL THEN 1
-            ELSE 0
-        END AS on_2b,
-        CASE
-            WHEN on_3b IS NOT NULL THEN 1
-            ELSE 0
-        END AS on_3b,
-        CASE
-            WHEN bat_score > fld_score THEN 1
-            WHEN bat_score < fld_score THEN -1
-            ELSE 0
-        END AS is_winning,
-        ROW_NUMBER() OVER (PARTITION BY game_pk ORDER BY game_date, at_bat_number, pitch_number) AS cumulative_pitch_number
+        ROW_NUMBER() OVER (PARTITION BY game_pk ORDER BY game_date, at_bat_number, pitch_number) /100 AS cumulative_pitch_number
     FROM 
         Statcast
     WHERE 
-        pitcher = {pitcher_id} 
+        pitcher = {pitcher_id} and pitch_Type = 'FF'
         AND release_speed IS NOT NULL
         AND release_spin_rate IS NOT NULL
         AND release_extension IS NOT NULL
@@ -239,14 +221,13 @@ def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
     ORDER BY 
         game_date ASC, 
         at_bat_number ASC,
-        pitch_number ASC
-    LIMIT 100;
+        pitch_number ASC;
     """
 
     pitch_data_df = query_mlb_db(query_str)
 
-    conditioning_cols = ['stand', 'pitch_number', 'strikes', 'balls', 'outs_when_up', 'on_1b',
-                         'on_2b','on_3b','is_winning','cumulative_pitch_number']
+    conditioning_cols = ['stand', 'cumulative_pitch_number']
+
 
     conditioning_df = pitch_data_df[conditioning_cols]
     non_conditioning_df = pitch_data_df.drop(conditioning_cols, axis=1)
@@ -258,16 +239,15 @@ def get_pitch_generation_features(pitcher_id, batch_size=32, shuffle=False):
     logger.info(f'Data successfully queried/transformed for {pitcher_id}')
 
     return non_conditioning_tensor, conditioning_tensor
+
+def generate_batter_pitch_weakness_table():
+    query_str = f'''
+    '''
+
+    table = None
+
     
 
-def get_bat_outcome_features():
-    pass
-
-def get_field_outcome_features():
-    pass
-
-def feature_class_mapping():
-    return 
 
 if __name__ == '__main__':
     #train_dataloader, val_dataloader, num_features, num_classes, label_encoders = get_pitch_outcome_dataset(665489,batch_size=2)
@@ -282,5 +262,5 @@ if __name__ == '__main__':
         #print(f'first batch features: {features}\n\n first batch labels: {labels}')
         #print(f'label encoder: {label_encoders}')
         #print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
-        #break
-    get_pitch_generation_features(579328)
+       #break
+    pass
