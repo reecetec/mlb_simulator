@@ -12,8 +12,11 @@ from data.data_utils import query_mlb_db
 from features.sql_dataset_loader import SQLiteDataset
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from copy import deepcopy
 import logging
 import torch
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -241,6 +244,90 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
     return non_conditioning_tensor, conditioning_tensor
 
 
+def encode_cat_cols(X, encoders_dict):
+    object_cols = [col for col in X.columns if X[col].dtype == 'object']
+    for col in object_cols:
+        le = LabelEncoder()
+        X[col] = le.fit_transform(X[col])
+        encoders_dict[col] = deepcopy(le)
+
+    return X, encoders_dict
+
+def get_sequencing_dataset(pitcher, backtest_date=''):
+
+    #for backtesting, add date query to only use past data
+    if backtest_date:
+       backtest_date = f'and game_date <= "{backtest_date}"' 
+    
+    pitcher_query_str = f"""
+        SELECT game_year, pitch_type, batter, pitch_number, strikes, balls, outs_when_up,
+            CASE
+                when stand='R' then 1
+                else 0
+            END AS stand,
+            CASE
+                when on_1b is not null then 1
+                else 0
+            END AS on_1b,
+            CASE
+                when on_2b is not null then 1
+                else 0
+            END AS on_2b,
+            CASE
+                when on_3b is not null then 1
+                else 0
+            END AS on_3b,
+            CASE
+                when fld_score - bat_score > 0 then 1
+                when fld_score - bat_score = 0 then 0
+                else -1
+            END AS is_winning,
+            LAG(pitch_type) OVER (PARTITION BY game_pk, pitcher, at_bat_number ORDER BY pitch_number) AS prev_pitch,
+            ROW_NUMBER() OVER (PARTITION BY game_pk, pitcher ORDER BY at_bat_number, pitch_number) AS cumulative_pitch_number
+        FROM Statcast
+        WHERE pitcher = {pitcher}
+            AND pitch_type IS NOT NULL
+            and pitch_type <> 'PO'
+            AND game_type <> 'E' || 'S'
+            and game_pk in (
+                select distinct game_pk
+                from Statcast
+                where pitcher = {pitcher}
+                    {backtest_date}
+                order by game_date desc
+                limit 34
+            )
+        ORDER BY game_year, at_bat_number, pitch_number
+    """
+    pitcher_df = query_mlb_db(pitcher_query_str).set_index('batter')
+    pitch_arsenal = pitcher_df['pitch_type'].unique()
+
+    sql_pitch_arsenal = ', '.join(pitch_arsenal)
+    
+
+    #get datasets
+    batter_query = lambda table: f"select batter, {sql_pitch_arsenal} from {table}"
+    strike_df = query_mlb_db(batter_query('BatterStrikePctByPitchType')).set_index('batter').add_suffix('_strike')
+    woba_df = query_mlb_db(batter_query('BatterAvgWobaByPitchType')).set_index('batter').add_suffix('_woba')
+
+
+    df = pitcher_df.merge(strike_df, left_index=True, right_index=True, how='left')
+    df = df.merge(woba_df, left_index=True, right_index=True, how='left')
+    df.reset_index(drop=True, inplace=True)
+
+    target_col = 'pitch_type'
+    encoders = {} # to store encoders
+
+    le = LabelEncoder()
+    y = pd.DataFrame(le.fit_transform(df['pitch_type']), columns=[target_col])
+
+    encoders[target_col] = deepcopy(le)
+
+    X = df.drop(target_col, axis=1)
+
+    X, encoders = encode_cat_cols(X, encoders)   
+    
+    return X, y, encoders
 
 
 if __name__ == '__main__':
