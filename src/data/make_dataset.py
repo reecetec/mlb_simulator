@@ -87,26 +87,22 @@ def update_statcast_table():
     engine = create_engine(f'sqlite:///{DB_LOCATION}', echo=False)
     max_date = pd.read_sql('select max(game_date) from Statcast',engine)['max(game_date)'][0]
     
-    cache.enable()
+    #cache.enable()
     today = datetime.today().strftime('%Y-%m-%d')
-    # if no data uploaded, get all data from 2017 to today.
+    # if no data uploaded, get all data from 2017 to today in yr chunks (avoid memory overload)
     if max_date==None:
-        df = statcast('2017-01-01', '2020-01-01', verbose=False)#today)
-        if not df.empty:
+        for year in range(2017, datetime.now().year + 1):
+            df = statcast(f'{year}-01-01', f'{year+1}-01-01', verbose=False)
+            if not df.empty:
+                # drop garbage
+                df = df.drop(columns=['pitcher.1','fielder_2.1'], errors='ignore')
+                # upload
+                df.to_sql('Statcast', engine, if_exists='append', index=False,
+                        chunksize=1000)
+            #cache.purge()
+            logger.info(f'Successfully uploaded statcast data from {year} to {year + 1}')
 
-            # drop garbage
-            df = df.drop(columns=['pitcher.1','fielder_2.1'], errors='ignore')
-
-            # ensure no duplicates
-            cur_keys = pd.read_sql('select game_date, game_pk, at_bat_number, pitch_number from Statcast', engine)
-            key_match_df = pd.merge(df, cur_keys, how='inner', on=['game_date', 'game_pk', 'at_bat_number', 'pitch_number'])
-            df.drop(key_match_df.index, inplace=True)
-
-            df.to_sql('Statcast', engine, if_exists='append', index=False,
-                      chunksize=1000)
-        logger.info('Successfully uploaded statcast data from 2017 to 2019')
-
-    # otherwise, get all data from 
+    # otherwise, get all data from max date in table
     else:
         max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d')
         key_date = (datetime.strptime(max_date, '%Y-%m-%d') - timedelta(days=2)).strftime('%Y-%m-%d')
