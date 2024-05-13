@@ -51,7 +51,7 @@ def fit_kde(pitcher_id, opposing_stance, pitch_type):
     
     return kde
 
-def sample_kde(kde, n):
+def sample_kde(kde, n=1):
     samples = kde.sample(n)
     sample_df = pd.DataFrame(samples, columns=PITCH_CHARACTERISITCS)
     return sample_df
