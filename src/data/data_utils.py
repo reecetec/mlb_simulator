@@ -2,44 +2,28 @@
 from pathlib import Path
 from sqlalchemy import create_engine
 import pandas as pd
-import pkgutil
 import os
-import dotenv
+import pathlib
 
-def get_db_locations(max_depth=10):
-    """Gets path for db file
-
-    Args:
-        max_depth (int, optional): max times to move back a directory. Defaults to 10.
-
-    Raises:
-        FileNotFoundError: uses README.md to locate root of project directory, so if not found an error is thrown
+def get_db_locations():
+    """gets paths for database and table schemas
 
     Returns:
-        strings: paths to database and table_schema json
+        str, str: db, table schema paths
     """
+    home_dir = pathlib.Path.home()
 
-    DB_PATH = '/home/reece/sports/mlb_simulator/data/databases/mlb.db'
-    TABLE_SCHEMA_PATH = '/home/reece/sports/mlb_simulator/data/databases/table_schema.json'
-    
-    #project_dir = os.path.join(os.path.dirname(__file__), os.pardir)
-    #dotenv_path = os.path.join(project_dir, '.env')
-    #dotenv.load_dotenv(dotenv_path)
+    DB_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'databases', 'mlb.db')
+    TABLE_SCHEMA_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'databases', 'table_schema.json')
 
-    return DB_PATH, TABLE_SCHEMA_PATH #os.environ.get("DB_PATH"), os.environ.get("TABLE_SCHEMA_PATH")
-
-def query_mlb_db(query_str):
-    try:
-        db_path, _ = get_db_locations()
-        engine = create_engine(f'sqlite:///{db_path}', echo=False)
-        df = pd.read_sql(query_str, engine)
-        return df
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        return None
-
+    return DB_PATH, TABLE_SCHEMA_PATH 
 
 def get_mlb_db_engine():
+    """Get an engine for the database. Can be used to run an upload script, etc.
+
+    Returns:
+        engine: sql engine
+    """
     try:
         db_path, _ = get_db_locations()
         engine = create_engine(f'sqlite:///{db_path}', echo=False)
@@ -47,3 +31,22 @@ def get_mlb_db_engine():
     except Exception as e:
         print(f'Error creating engine: {e}')
         return None
+
+def query_mlb_db(query_str) -> pd.DataFrame:
+    """Function to query the mlb database
+
+    Args:
+        query_str (str): the query to send to the mlb database
+
+    Returns:
+        pd.DataFrame: dataframe of query, or None if error
+    """
+    try:
+        engine = get_mlb_db_engine()
+        df = pd.read_sql(query_str, engine)
+        return df
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        return None
+
+

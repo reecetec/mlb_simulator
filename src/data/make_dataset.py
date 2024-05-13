@@ -9,11 +9,9 @@ import json
 from sqlalchemy import create_engine
 import pandas as pd
 from datetime import datetime, timedelta
-from pybaseball import statcast, cache
-from data_utils import get_db_locations
+from pybaseball import statcast
 from scipy.stats import zscore
-from data_utils import get_mlb_db_engine
-from data_utils import query_mlb_db
+from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations
 
 #DB_LOCATION = '../../data/databases/mlb.db'
 #TABLE_SCHEMAS_PATH = '../../data/databases/table_schema.json'
