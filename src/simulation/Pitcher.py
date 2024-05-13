@@ -23,6 +23,7 @@ class Pitcher(Player):
         print(f'Init complete for {self.name}')
 
     def fit_pitch_characteristic_generator(self):
+        'NEED TO ACCOUNT FOR BATTER STRIKE ZONE...' 
         pass
 
     def fit_pitch_sequencer(self):
