@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import os
 import pathlib
+import subprocess
 
 def get_db_locations():
     """gets paths for database and table schemas
@@ -49,4 +50,19 @@ def query_mlb_db(query_str) -> pd.DataFrame:
         print(f"Error executing query: {e}")
         return None
 
+
+
+def git_pull(repo_path, logger):
+    try:
+        subprocess.run(['git', 'pull'], cwd=repo_path, check=True)
+        logger.info("Repository successfully pulled")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error pulling repository: {e}")
+
+def git_clone(repo_url, save_path, logger):
+    try:
+        subprocess.run(['git', 'clone', repo_url, save_path], check=True)
+        logger.info("Repository successfully cloned")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error cloning repository: {e}")
 

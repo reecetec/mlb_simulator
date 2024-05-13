@@ -4,6 +4,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
+import pathlib
+import os
 import sqlite3
 import json
 from sqlalchemy import create_engine
@@ -11,7 +13,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from pybaseball import statcast
 from scipy.stats import zscore
-from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations
+from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations, git_clone, git_pull
 
 #DB_LOCATION = '../../data/databases/mlb.db'
 #TABLE_SCHEMAS_PATH = '../../data/databases/table_schema.json'
@@ -162,6 +164,16 @@ def update_woba_strike_tables(min_pitch_count=50, min_hit_count=15, backtest_yr=
     strike_df.to_sql('BatterStrikePctByPitchType', engine, if_exists='replace')
     woba_df.to_sql('BatterAvgWobaByPitchType', engine, if_exists='replace')
 
+def update_chadwick_repo():
+    home_dir = pathlib.Path.home()
+    repo_save_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'raw', 'chadwick')
+    
+    if os.path.exists(repo_save_path):
+        git_pull(repo_save_path, logger)
+    else:
+        repo_url = 'https://github.com/chadwickbureau/register.git'
+        git_clone(repo_url, repo_save_path, logger)
+
 
 def main():
     logger.info('Starting SQLite db creation/updates')
@@ -177,6 +189,9 @@ def main():
 
     logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
     update_woba_strike_tables()
+
+    logger.info('Updating chadwick repo')
+    update_chadwick_repo()
     
     logger.info('DB creation/updates complete')
 
