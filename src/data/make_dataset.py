@@ -4,6 +4,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
+import requests
 import pathlib
 import os
 import sqlite3
@@ -174,9 +175,57 @@ def update_chadwick_repo():
         repo_url = 'https://github.com/chadwickbureau/register.git'
         git_clone(repo_url, repo_save_path, logger)
 
+def update_player_name_map():
+    home_dir = pathlib.Path.home()
+    save_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'raw', 'name_map.csv')
+
+    url = 'https://www.smartfantasybaseball.com/PLAYERIDMAPCSV'
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
+    res = requests.get(url, headers=headers)
+    open(save_path, 'wb').write(res.content)
+
+import os
+import pathlib
+import requests
+
+def update_player_name_map():
+    home_dir = pathlib.Path.home()
+    save_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'raw', 'name_map.csv')
+
+    url = 'https://www.smartfantasybaseball.com/PLAYERIDMAPCSV'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
+    res = requests.get(url, headers=headers)
+
+    if res.status_code == 200:
+        # Delete the existing file if it exists
+        if os.path.exists(save_path):
+            os.remove(save_path)
+            print(f"Existing file '{save_path}' deleted.")
+
+        # Save the content of the response (CSV file) to the specified path
+        open(save_path, 'wb').write(res.content)
+        print(f"New file downloaded and saved to '{save_path}'")
+    else:
+        print(f"Failed to download CSV file. Status code: {res.status_code}")
+
+
 
 def main():
     logger.info('Starting SQLite db creation/updates')
+
+    # only update this once a month.
+    if datetime.now().day == 1:
+        logger.info('Updating player name mapping')
+        update_player_name_map()
+        logger.info('Updating chadwick repo')
+        update_chadwick_repo()
+
 
     #For each table in the list, make sure it is created with desired schema
     required_tables = ['Statcast']
@@ -189,10 +238,7 @@ def main():
 
     logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
     update_woba_strike_tables()
-
-    logger.info('Updating chadwick repo')
-    update_chadwick_repo()
-    
+        
     logger.info('DB creation/updates complete')
 
 if __name__ == '__main__':
