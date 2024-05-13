@@ -240,13 +240,7 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
 
     return non_conditioning_tensor, conditioning_tensor
 
-def generate_batter_pitch_weakness_table():
-    query_str = f'''
-    '''
 
-    table = None
-
-    
 
 
 if __name__ == '__main__':

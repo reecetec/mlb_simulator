@@ -11,6 +11,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 from pybaseball import statcast, cache
 from data_utils import get_db_locations
+from scipy.stats import zscore
+from data_utils import get_mlb_db_engine
+from data_utils import query_mlb_db
 
 #DB_LOCATION = '../../data/databases/mlb.db'
 #TABLE_SCHEMAS_PATH = '../../data/databases/table_schema.json'
@@ -124,6 +127,48 @@ def update_statcast_table():
         logger.info(f'Successfully uploaded {len(upload_df)} rows to table Statcast')
 
 
+def update_woba_strike_tables(min_pitch_count=50, min_hit_count=15, backtest_yr=None):
+
+    if backtest_yr:
+        backtest_yr = f'and game_year < {backtest_yr}'
+    else:
+        backtest_yr = ''
+
+    batter_df = query_mlb_db(f"""
+        select batter, pitch_type, type, woba_value
+        from Statcast
+        where pitch_type <> 'PO' 
+            and pitch_type is not null
+            and type is not null
+            {backtest_yr}
+    """)
+
+
+    """
+    get each batters strike percentage for each pitch in pitch arsenal given they have
+    at least min_pitch_count of the pitch type thrown to them
+    standardize across all batters
+    """
+    filtered_data = batter_df.groupby(['batter', 'pitch_type']).filter(lambda x: len(x) >= min_pitch_count)
+    strike_percentage = filtered_data.groupby(['batter', 'pitch_type'])['type'].apply(lambda x: (x == 'S').mean() * 100)
+    strike_percentage_standardized = strike_percentage.groupby('pitch_type').transform(zscore).reset_index()    
+    strike_df = strike_percentage_standardized.pivot(index='batter', columns='pitch_type', values='type').fillna(0)
+
+    """
+    do the same as above but for avg woba when they hit the ball
+    """
+    filtered_data = batter_df[batter_df['type'] == 'X'].groupby(['batter', 'pitch_type']).filter(lambda x: (x['type'] == 'X').sum() >= min_hit_count)
+    average_woba = filtered_data.groupby(['batter', 'pitch_type'])['woba_value'].mean()
+    average_woba_standardized = average_woba.groupby('pitch_type').transform(zscore).reset_index()
+    woba_df = average_woba_standardized.pivot(index='batter', columns='pitch_type', values='woba_value').fillna(0)
+
+    #upload df's
+    engine = get_mlb_db_engine()
+
+    strike_df.to_sql('BatterStrikePctByPitchType', engine, if_exists='replace')
+    woba_df.to_sql('BatterAvgWobaByPitchType', engine, if_exists='replace')
+
+
 def main():
     logger.info('Starting SQLite db creation/updates')
 
@@ -132,9 +177,12 @@ def main():
     for table in required_tables:
         create_table(table)
 
-    #run update function on each table
+    # update tables
     logger.info(f'Updating Statcast')
     update_statcast_table()
+
+    logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
+    update_woba_strike_tables()
     
     logger.info('DB creation/updates complete')
 
