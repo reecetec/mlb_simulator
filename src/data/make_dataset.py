@@ -12,7 +12,12 @@ import json
 from sqlalchemy import create_engine
 import pandas as pd
 from datetime import datetime, timedelta
+import os
+import pathlib
+import requests
 from pybaseball import statcast
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
 from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations, git_clone, git_pull
 
@@ -181,22 +186,6 @@ def update_player_name_map():
 
     url = 'https://www.smartfantasybaseball.com/PLAYERIDMAPCSV'
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-
-    res = requests.get(url, headers=headers)
-    open(save_path, 'wb').write(res.content)
-
-import os
-import pathlib
-import requests
-
-def update_player_name_map():
-    home_dir = pathlib.Path.home()
-    save_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'raw', 'name_map.csv')
-
-    url = 'https://www.smartfantasybaseball.com/PLAYERIDMAPCSV'
-    headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
 
@@ -214,7 +203,56 @@ def update_player_name_map():
     else:
         print(f"Failed to download CSV file. Status code: {res.status_code}")
 
+def update_similar_sz_table():
 
+    player_sz_data = query_mlb_db('''select batter, avg(sz_top) as sz_top, avg(sz_bot) as sz_bot
+                                    from Statcast
+                                    where sz_top & sz_bot is not null
+                                    group by batter''')
+    
+    X = player_sz_data[['sz_top', 'sz_bot']].values
+    
+    # normalization or standardization
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # clustering
+    kmeans = KMeans(n_clusters=10)  
+    kmeans.fit(X_scaled)
+    cluster_labels = kmeans.labels_
+    
+    # add cluster labels 
+    player_sz_data['cluster'] = cluster_labels
+
+    engine = get_mlb_db_engine()
+
+    try:
+        if engine:
+            upload_df = player_sz_data[['batter','cluster']]
+            upload_df.to_sql('BatterStrikezoneCluster', engine, if_exists='replace', index=False)
+        else:
+            raise GetEngineError('Could not create db engine')
+    except GetEngineError as e:
+        print(e.args)
+
+
+def update_sz_lookup():
+
+    player_sz_data = query_mlb_db('''select batter, round(avg(sz_top),3) as sz_top, round(avg(sz_bot),3) as sz_bot
+                                    from Statcast
+                                    where sz_top & sz_bot is not null
+                                    group by batter''')
+
+    engine = get_mlb_db_engine()
+
+    try:
+        if engine:
+            upload_df = player_sz_data
+            upload_df.to_sql('BatterStrikezoneLookup', engine, if_exists='replace', index=False)
+        else:
+            raise GetEngineError('Could not create db engine')
+    except GetEngineError as e:
+        print(e.args)
 
 def main():
     logger.info('Starting SQLite db creation/updates')
@@ -238,6 +276,12 @@ def main():
 
     logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
     update_woba_strike_tables()
+
+    logger.info(f'Updating update_similar_sz_table')
+    update_similar_sz_table()
+
+    logger.info(f'Updating BatterStrikezoneLookup')
+    update_sz_lookup()
         
     logger.info('DB creation/updates complete')
 

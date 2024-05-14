@@ -25,6 +25,14 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+PITCH_CHARACTERISITCS = [
+    'release_speed', 'release_spin_rate', 'release_extension',
+    'release_pos_x', 'release_pos_y', 'release_pos_z',
+    'spin_axis', 'pfx_x', 'pfx_z',
+    'vx0', 'vy0', 'vz0',
+    'ax', 'ay', 'az',
+    'plate_x', 'plate_z'
+]
 
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
 
@@ -304,7 +312,6 @@ def get_sequencing_dataset(pitcher, backtest_date=''):
 
     sql_pitch_arsenal = ', '.join(pitch_arsenal)
     
-
     #get datasets
     batter_query = lambda table: f"select batter, {sql_pitch_arsenal} from {table}"
     strike_df = query_mlb_db(batter_query('BatterStrikePctByPitchType')).set_index('batter').add_suffix('_strike')
@@ -327,8 +334,33 @@ def get_sequencing_dataset(pitcher, backtest_date=''):
 
     X, encoders = encode_cat_cols(X, encoders)   
     
-    return X, y, encoders
+    return X, y, encoders, pitch_arsenal
 
+
+def get_pitches(pitcher_id, opposing_stance, pitch_type, backtest_date=''):
+    if backtest_date:
+       backtest_date = f'and game_date <= "{backtest_date}"' 
+    pitch_df =  query_mlb_db(f'''select 
+        {', '.join(PITCH_CHARACTERISITCS)}, batter, strikes, balls
+        from Statcast
+        where pitcher={pitcher_id} and
+        stand="{opposing_stance}" and
+        pitch_type="{pitch_type}"
+        and
+        {' & '.join(PITCH_CHARACTERISITCS)} 
+        is not null
+        AND game_type <> 'E' || 'S'
+        {backtest_date}
+        ''')
+
+    if (l := len(pitch_df)) < 50:
+        logger.warning(f'low pitch count ({l}) for {opposing_stance} {pitch_type}')
+
+    sz_df = query_mlb_db('select * from BatterStrikezoneLookup')
+
+    df = pd.merge(pitch_df, sz_df, on='batter', how='left').drop(['batter'], axis=1)
+
+    return df
 
 if __name__ == '__main__':
     #train_dataloader, val_dataloader, num_features, num_classes, label_encoders = get_pitch_outcome_dataset(665489,batch_size=2)
@@ -344,4 +376,10 @@ if __name__ == '__main__':
         #print(f'label encoder: {label_encoders}')
         #print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
        #break
-    pass
+    kukuchi = 579328
+    jones = 683003
+
+    pitcher = kukuchi
+
+    all_pitches = get_pitches(pitcher,'L','CU')
+    print(all_pitches.head())
