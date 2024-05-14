@@ -250,8 +250,8 @@ def update_sz_lookup():
             upload_df = player_sz_data
             upload_df.to_sql('BatterStrikezoneLookup', engine, if_exists='replace', index=False)
         else:
-            raise GetEngineError('Could not create db engine')
-    except GetEngineError as e:
+            raise NameError('Could not create db engine')
+    except NameError as e:
         print(e.args)
 
 def main():
