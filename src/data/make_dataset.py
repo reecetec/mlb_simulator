@@ -231,8 +231,8 @@ def update_similar_sz_table():
             upload_df = player_sz_data[['batter','cluster']]
             upload_df.to_sql('BatterStrikezoneCluster', engine, if_exists='replace', index=False)
         else:
-            raise GetEngineError('Could not create db engine')
-    except GetEngineError as e:
+            raise NameError('Could not create db engine')
+    except NameError as e:
         print(e.args)
 
 
