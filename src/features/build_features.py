@@ -34,6 +34,100 @@ PITCH_CHARACTERISITCS = [
     'plate_x', 'plate_z'
 ]
 
+def get_xgb_set(df, target_col, split=False):
+    encoders = {} # to store encoders
+
+    le = LabelEncoder()
+    y = pd.DataFrame(le.fit_transform(df[target_col]), columns=[target_col])
+
+    encoders[target_col] = deepcopy(le)
+
+    X = df.drop(target_col, axis=1)
+
+    X, encoders = encode_cat_cols(X, encoders)   
+
+    if split:
+        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+        return X_train, y_train, X_test, y_test, encoders
+    
+    return X, y, encoders
+
+def encode_cat_cols(X, encoders_dict):
+    object_cols = [col for col in X.columns if X[col].dtype == 'object']
+    for col in object_cols:
+        le = LabelEncoder()
+        X[col] = le.fit_transform(X[col])
+        encoders_dict[col] = deepcopy(le)
+
+    return X, encoders_dict
+
+def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
+
+    if backtest_date:
+       backtest_date = f'and game_date <= "{backtest_date}"' 
+
+    query_str = f"""
+        select 
+            case
+                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
+                    or description='swinging_pitchout' then 'strike'
+                when description='foul' or description='foul_pitchout' then 'foul'
+                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
+                when description='hit_by_pitch' then 'hit_by_pitch'
+                when description='hit_into_play' then 'hit_into_play'
+                else NULL
+            end as pitch_outcome,
+            
+            p_throws, pitch_number, strikes, balls, outs_when_up,
+            
+            case
+                when bat_score > fld_score then 1
+                when bat_score < fld_score then -1
+                else 0
+            end as is_winning,
+            
+            release_speed, 
+            release_spin_rate, 
+            release_extension,
+
+            release_pos_x,
+            release_pos_y,
+            release_pos_z,
+            
+            spin_axis,
+            pfx_x, pfx_z, 
+            
+            vx0, vy0, vz0,
+            ax, ay, az,
+            plate_x, plate_z
+            
+        from Statcast
+        where batter={batter_id}
+        and pitch_outcome & p_throws & pitch_number & strikes & balls & outs_when_up & is_winning &
+            release_speed &
+            release_spin_rate &
+            release_extension &
+
+            release_pos_x &
+            release_pos_y &
+            release_pos_z &
+            
+            spin_axis &
+            pfx_x & pfx_z &
+            
+            vx0 & vy0 & vz0 &
+            ax & ay & az &
+            plate_x & plate_z
+        is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    """
+
+    df = query_mlb_db(query_str)
+
+    target_col = 'pitch_outcome'
+    return get_xgb_set(df, target_col, split)
+    
 def get_pitch_outcome_dataset(batter_id, batch_size=32, shuffle=False):
 
     query_str = f"""
@@ -250,16 +344,6 @@ def get_pitch_outcome_dataset_general(cluster_id, stands, batch_size=32, shuffle
     logger.info(f'Data successfully queried/transformed for {pitcher_id}')
 
     return non_conditioning_tensor, conditioning_tensor
-
-
-def encode_cat_cols(X, encoders_dict):
-    object_cols = [col for col in X.columns if X[col].dtype == 'object']
-    for col in object_cols:
-        le = LabelEncoder()
-        X[col] = le.fit_transform(X[col])
-        encoders_dict[col] = deepcopy(le)
-
-    return X, encoders_dict
 
 def get_sequencing_dataset(pitcher, backtest_date=''):
 
