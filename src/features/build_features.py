@@ -47,8 +47,8 @@ def get_xgb_set(df, target_col, split=False):
     X, encoders = encode_cat_cols(X, encoders)   
 
     if split:
-        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
-        return X_train, y_train, X_test, y_test, encoders
+        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=0.25)
+        return X_train, X_test, y_train, y_test, encoders
     
     return X, y, encoders
 
@@ -119,6 +119,27 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
             ax & ay & az &
             plate_x & plate_z
         is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    """
+    query_str = f"""
+        select 
+            case
+                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
+                    or description='swinging_pitchout' then 'strike'
+                when description='foul' or description='foul_pitchout' then 'foul'
+                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
+                when description='hit_by_pitch' then 'hit_by_pitch'
+                when description='hit_into_play' then 'hit_into_play'
+                else NULL
+            end as pitch_outcome,
+            pitch_type,
+            p_throws, strikes, balls,
+            plate_x, plate_z
+        from Statcast
+        where batter={batter_id}
+            and pitch_outcome & pitch_type & p_throws & strikes & balls & outs_when_up & plate_x & plate_z
+                is not null
         {backtest_date}
         order by game_date asc, at_bat_number asc, pitch_number asc;
     """
