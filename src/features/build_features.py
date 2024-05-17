@@ -34,7 +34,7 @@ PITCH_CHARACTERISITCS = [
     'plate_x', 'plate_z'
 ]
 
-def get_xgb_set(df, target_col, split=False):
+def get_xgb_set(df, target_col, split=False, test_size=0.1):
     encoders = {} # to store encoders
 
     le = LabelEncoder()
@@ -47,10 +47,23 @@ def get_xgb_set(df, target_col, split=False):
     X, encoders = encode_cat_cols(X, encoders)   
 
     if split:
-        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=0.25)
+        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=test_size)
         return X_train, X_test, y_train, y_test, encoders
     
     return X, y, encoders
+
+def get_xgb_set_regression(df, target_cols, split=False, test_size=0.1):
+    encoders = {}
+    y = df[target_cols]
+    X = df.drop(target_cols, axis=1)
+    X, encoders = encode_cat_cols(X, encoders)
+
+    if split:
+        X_train, y_train, X_test, y_test = train_test_split(X, y, shuffle=False, test_size=test_size)
+        return X_train, X_test, y_train, y_test, encoders
+    
+    return X, y, encoders
+    
 
 def encode_cat_cols(X, encoders_dict):
     object_cols = [col for col in X.columns if X[col].dtype == 'object']
@@ -60,6 +73,64 @@ def encode_cat_cols(X, encoders_dict):
         encoders_dict[col] = deepcopy(le)
 
     return X, encoders_dict
+
+def get_hit_outcome_dataset(batter_id, split=False, backtest_date=''):
+
+    if backtest_date:
+       backtest_date = f'and game_date <= "{backtest_date}"' 
+
+    #CAST(TAN((hc_x - 128) / (208 - hc_y)) * 180 / PI() * 0.75 AS INT) AS spray_angle,
+    query_str = f"""
+        select 
+            launch_speed, launch_angle, ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90)) as spray_angle,
+            
+            release_speed, 
+            release_spin_rate, 
+            release_extension,
+
+            release_pos_x,
+            release_pos_y,
+            release_pos_z,
+            
+            spin_axis,
+            pfx_x, pfx_z, 
+            
+            vx0, vy0, vz0,
+            ax, ay, az,
+            plate_x, plate_z
+            
+        from Statcast
+        where batter={batter_id}
+        and description = 'hit_into_play'
+        and
+
+            launch_speed &
+            launch_angle &
+            spray_angle &    
+        
+            release_speed &
+            release_spin_rate &
+            release_extension &
+
+            release_pos_x &
+            release_pos_y &
+            release_pos_z &
+            
+            spin_axis &
+            pfx_x & pfx_z &
+            
+            vx0 & vy0 & vz0 &
+            ax & ay & az &
+            plate_x & plate_z
+        is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    """
+
+    df = query_mlb_db(query_str)
+
+    target_cols = ['launch_speed', 'launch_angle', 'spray_angle']
+    return get_xgb_set_regression(df, target_cols, split=split)
 
 def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
 
@@ -78,7 +149,7 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
                 else NULL
             end as pitch_outcome,
             
-            p_throws, pitch_number, strikes, balls, outs_when_up,
+            p_throws, pitch_number, strikes, balls,
             
             case
                 when bat_score > fld_score then 1
@@ -103,7 +174,7 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
             
         from Statcast
         where batter={batter_id}
-        and pitch_outcome & p_throws & pitch_number & strikes & balls & outs_when_up & is_winning &
+        and pitch_outcome & p_throws & pitch_number & strikes & balls & is_winning &
             release_speed &
             release_spin_rate &
             release_extension &
@@ -119,27 +190,6 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
             ax & ay & az &
             plate_x & plate_z
         is not null
-        {backtest_date}
-        order by game_date asc, at_bat_number asc, pitch_number asc;
-    """
-    query_str = f"""
-        select 
-            case
-                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
-                    or description='swinging_pitchout' then 'strike'
-                when description='foul' or description='foul_pitchout' then 'foul'
-                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
-                when description='hit_by_pitch' then 'hit_by_pitch'
-                when description='hit_into_play' then 'hit_into_play'
-                else NULL
-            end as pitch_outcome,
-            pitch_type,
-            p_throws, strikes, balls,
-            plate_x, plate_z
-        from Statcast
-        where batter={batter_id}
-            and pitch_outcome & pitch_type & p_throws & strikes & balls & outs_when_up & plate_x & plate_z
-                is not null
         {backtest_date}
         order by game_date asc, at_bat_number asc, pitch_number asc;
     """
