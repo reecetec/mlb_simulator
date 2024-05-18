@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
 from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations, git_clone, git_pull
-
+import statsapi
 #DB_LOCATION = '../../data/databases/mlb.db'
 #TABLE_SCHEMAS_PATH = '../../data/databases/table_schema.json'
 DB_LOCATION, TABLE_SCHEMAS_PATH = get_db_locations()
@@ -254,6 +254,22 @@ def update_sz_lookup():
     except NameError as e:
         print(e.args)
 
+
+
+def update_stadium_table():
+    date_range_df = query_mlb_db('select min(game_date) as min_date, max(game_date) as max_date from Statcast')
+    min_dt = datetime.strptime(date_range_df['min_date'][0], '%Y-%m-%d %H:%M:%S.%f')
+    min_date = min_dt.strftime('%m/%d/%Y')
+    max_dt = datetime.strptime(date_range_df['max_date'][0], '%Y-%m-%d %H:%M:%S.%f')
+    max_date = max_dt.strftime('%m/%d/%Y')
+    games = statsapi.schedule(start_date=min_date,end_date=max_date)
+    games_df = pd.DataFrame(games)[['game_id', 'game_datetime', 'game_type', 'venue_id', 'venue_name']]
+
+    engine = get_mlb_db_engine()
+    games_df.to_sql('GamePkParkMapping', engine, if_exists='replace', index=False)
+
+  
+
 def main():
     logger.info('Starting SQLite db creation/updates')
 
@@ -277,11 +293,14 @@ def main():
     logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
     update_woba_strike_tables()
 
-    logger.info(f'Updating update_similar_sz_table')
+    logger.info(f'Updating BatterStrikezoneCluster')
     update_similar_sz_table()
 
     logger.info(f'Updating BatterStrikezoneLookup')
     update_sz_lookup()
+
+    logger.info(f'Updating GamePkParkMapping')
+    update_stadium_table()
         
     logger.info('DB creation/updates complete')
 
