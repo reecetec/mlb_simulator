@@ -76,13 +76,15 @@ def encode_cat_cols(X, encoders_dict):
 
 def get_hit_outcome_dataset(batter_id, split=False, backtest_date=''):
 
+    backtest_yr = None
     if backtest_date:
        backtest_date = f'and game_date <= "{backtest_date}"' 
+       backtest_yr = backtest_date[:4]
 
     #CAST(TAN((hc_x - 128) / (208 - hc_y)) * 180 / PI() * 0.75 AS INT) AS spray_angle,
     query_str = f"""
         select 
-            launch_speed, launch_angle, ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90)) as spray_angle,
+            game_pk, launch_speed, launch_angle, ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90)) as spray_angle,
             
             release_speed, 
             release_spin_rate, 
@@ -124,10 +126,46 @@ def get_hit_outcome_dataset(batter_id, split=False, backtest_date=''):
             plate_x & plate_z
         is not null
         {backtest_date}
+        and game_pk in (
+                select distinct game_pk
+                from Statcast
+                where batter = {batter_id}
+                    {backtest_date}
+                order by game_date desc
+                limit 162
+            )
         order by game_date asc, at_bat_number asc, pitch_number asc;
     """
 
     df = query_mlb_db(query_str)
+
+    #get park factors that affect hit distance based on backtest yr
+    venue_df = query_mlb_db('select * from VenueGamePkMapping')
+    park_factors_df = query_mlb_db('select * from ParkFactors')
+    
+    col_idx = 4
+    if backtest_yr:
+        for idx, col in enumerate(park_factors_df.columns):
+            if backtest_yr in col:
+                col_idx = idx
+                break
+    park_factors_df['distance_factor'] = park_factors_df[park_factors_df.columns[col_idx:col_idx+3]].astype(float).mean(axis=1).fillna(0)
+    cur_park_factors_df = park_factors_df[['venue_id', 'venue_name', 'distance_factor']].sort_values(by='distance_factor', ascending=False)
+
+
+    df = df.merge(venue_df[['game_pk', 'venue_id']], on='game_pk', how='left')
+
+    #venue_df['venue_id'] = venue_df['venue_id'].astype(int)
+    #venue_df['game_pk'] = venue_df['game_pk'].astype(int)
+    cur_park_factors_df['venue_id'] = cur_park_factors_df['venue_id'].astype(int)
+    df['venue_id'] = df['venue_id'].astype(int)
+
+    df = df.merge(cur_park_factors_df[['venue_id', 'distance_factor']], on='venue_id', how='left')
+
+    df.drop(['game_pk', 'venue_id'], axis=1, inplace=True)
+
+    #some spring training fields dont have statcast distance.
+    df['distance_factor'] = df['distance_factor'].fillna(0)
 
     target_cols = ['launch_speed', 'launch_angle', 'spray_angle']
     return get_xgb_set_regression(df, target_cols, split=split)
