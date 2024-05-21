@@ -63,7 +63,57 @@ def get_xgb_set_regression(df, target_cols, split=False, test_size=0.1):
         return X_train, X_test, y_train, y_test, encoders
     
     return X, y, encoders
+
+def get_hit_classification_dataset(split=False, backtest_date=''):
+    if backtest_date:
+       backtest_date = f'and game_date <= "{backtest_date}"' 
     
+    df = query_mlb_db(f"""
+    SELECT
+        CASE
+            WHEN events IN ('single') THEN 'single'
+            WHEN events IN ('double') THEN 'double'
+            WHEN events IN ('triple') THEN 'triple'
+            WHEN events IN ('home_run') THEN 'home_run'
+            WHEN events IN ('field_out') THEN 'field_out'
+            WHEN events IN ('ground_out', 'force_out') THEN 'ground_out'
+            WHEN events IN ('fly_out', 'sac_fly') THEN 'fly_out'
+            WHEN events IN ('double_play', 'grounded_into_double_play', 'sac_fly_double_play') THEN 'double_play'
+            WHEN events IN ('triple_play') THEN 'triple_play'
+            WHEN events IN ('field_error') THEN 'fielding_error'
+            WHEN events IN ('fielders_choice') THEN 'fielders_choice'
+            ELSE NULL
+        END AS simplified_outcome,
+        game_pk, batter,
+        case when inning_topbot='Top' then home_team else away_team end as 'fielding_team',
+        game_year, outs_when_up, 
+        case when on_1b is not null then 1 else 0 end as on_1b,
+        case when on_2b is not null then 1 else 0 end as on_2b,
+        case when on_3b is not null then 1 else 0 end as on_3b,    
+        if_fielding_alignment, of_fielding_alignment,
+        launch_speed, launch_angle, ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90)) as spray_angle
+    FROM
+        Statcast
+    WHERE type='X'
+    and 
+    simplified_outcome &
+    game_year & outs_when_up & of_fielding_alignment &
+    launch_speed & launch_angle & spray_angle is not null
+    {backtest_date}
+    ORDER BY GAME_DATE ASC;
+    """)
+
+    speed_df = query_mlb_db('select mlb_id as batter, speed from PlayerSpeed;')
+    venue_df = query_mlb_db('select game_pk, venue_name from VenueGamePkMapping;')
+    df = df.merge(venue_df, how='left', on='game_pk')
+    df = df.merge(speed_df, how='left', on='batter')
+    df['speed'] = df['speed'].astype(float)
+    df['speed'] = df['speed'].fillna(df['speed'].mean())
+    df = df.drop(['batter', 'game_pk'], axis=1)
+
+    target_col = 'simplified_outcome'
+    return get_xgb_set(df, target_col=target_col, split=split)
+
 
 def encode_cat_cols(X, encoders_dict):
     object_cols = [col for col in X.columns if X[col].dtype == 'object']

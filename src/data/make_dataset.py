@@ -305,18 +305,10 @@ def update_venue_game_pk_mapping():
     else:
         logger.info(f'Successfully uploaded {0} rows to table VenueGamePkMapping')
 
-def update_player_speed():
-    url = f"https://baseballsavant.mlb.com/leaderboard/statcast-park-factors?type=distance-all&year={datetime.now().year}&batSide=&stat=index_wOBA&condition=All&rolling="
-    response = requests.get(url)
-    data = re.search(r"data = (.*);", response.text).group(1)
-    data = json.loads(data)
-    df = pd.DataFrame(data)
-    engine = get_mlb_db_engine()
-    df.to_sql('PlayerSpeed', engine, if_exists='replace', index=False)
 
 def update_oaa():
-    url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide&sort=5&sortDir=desc"
-
+    #url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide&sort=5&sortDir=desc"
+    url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide"
     response = requests.get(url)
     data = re.search(r"data = (.*);", response.text).group(1)
     data = json.loads(data)
@@ -341,6 +333,22 @@ def update_oaa():
 
     engine = get_mlb_db_engine()
     df.to_sql('TeamOAA', engine, if_exists='replace', index=False)
+
+def update_run_speed():
+    url = f"https://baseballsavant.mlb.com/leaderboard/sprint_speed?min_season=2021&max_season={datetime.now().year}&position=&team=&min=5"
+    response = requests.get(url)
+    data = re.search(r"data = (.*);", response.text).group(1)
+    data = json.loads(data)
+    df = pd.DataFrame(data)[['runner_id', 'r_sprint_speed_top50percent']]
+
+    column_renames = {
+        'runner_id': 'mlb_id',
+        'r_sprint_speed_top50percent': 'speed'
+    }
+    df.rename(columns=column_renames, inplace=True)
+
+    engine = get_mlb_db_engine()
+    df.to_sql('PlayerSpeed', engine, if_exists='replace', index=False)
 
 def main():
     logger.info('Starting SQLite db creation/updates')
@@ -379,6 +387,9 @@ def main():
 
     logger.info(f'Updating TeamOAA')
     update_oaa()
+
+    logger.info(f'Updating PlayerSpeed')
+    update_run_speed()
         
     logger.info('DB creation/updates complete')
 
