@@ -1,6 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+import time
+from tqdm import tqdm
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
@@ -12,7 +14,7 @@ import json
 from sqlalchemy import create_engine
 import pandas as pd
 from datetime import datetime, timedelta
-import os
+import re
 import pathlib
 import requests
 from pybaseball import statcast
@@ -256,7 +258,7 @@ def update_sz_lookup():
 
 
 
-def update_stadium_table():
+def update_stadium_table_old():
     date_range_df = query_mlb_db('select min(game_date) as min_date, max(game_date) as max_date from Statcast')
     min_dt = datetime.strptime(date_range_df['min_date'][0], '%Y-%m-%d %H:%M:%S.%f')
     min_date = min_dt.strftime('%m/%d/%Y')
@@ -268,7 +270,77 @@ def update_stadium_table():
     engine = get_mlb_db_engine()
     games_df.to_sql('GamePkParkMapping', engine, if_exists='replace', index=False)
 
-  
+def update_park_factors():
+    url = "https://baseballsavant.mlb.com/leaderboard/statcast-park-factors?type=distance-all&year=2023&batSide=&stat=index_wOBA&condition=All&rolling="
+    response = requests.get(url)
+    data = re.search(r"data = (.*);", response.text).group(1)
+    data = json.loads(data)
+    df = pd.DataFrame(data)
+    engine = get_mlb_db_engine()
+    df.to_sql('ParkFactors', engine, if_exists='replace', index=False)
+
+def update_venue_game_pk_mapping():
+    game_pks = query_mlb_db('select distinct game_pk from Statcast')
+    venue_game_pks = query_mlb_db('select distinct game_pk from VenueGamePkMapping')
+    missing_game_pks = game_pks[~game_pks['game_pk'].isin(venue_game_pks['game_pk'])]['game_pk'].to_list()
+
+    if missing_game_pks:
+        sleep_time = 1/10
+        venue_data = []
+        for game_pk in tqdm(missing_game_pks, total=len(missing_game_pks)):
+            res = requests.get(f'https://statsapi.mlb.com/api/v1/schedule?gamePk={game_pk}')
+            if res.status_code == 200:
+                game_json = res.json()
+                venue = game_json['dates'][0]['games'][0]['venue']
+                venue['game_pk'] = game_pk
+                venue_data.append(venue)
+                #dont get rate limited... apparently max is 25/sec, 10/sec to be on safe side
+                time.sleep(sleep_time)
+        df = pd.DataFrame(venue_data)
+        upload_df = df.rename(columns={"name": "venue_name", "id": "venue_id"})[['game_pk','venue_name','venue_id']]
+        engine = get_mlb_db_engine()
+        upload_df.to_sql('VenueGamePkMapping', engine, if_exists='append', index=False)
+
+        logger.info(f'Successfully uploaded {len(upload_df)} rows to table VenueGamePkMapping')
+    else:
+        logger.info(f'Successfully uploaded {0} rows to table VenueGamePkMapping')
+
+def update_player_speed():
+    url = f"https://baseballsavant.mlb.com/leaderboard/statcast-park-factors?type=distance-all&year={datetime.now().year}&batSide=&stat=index_wOBA&condition=All&rolling="
+    response = requests.get(url)
+    data = re.search(r"data = (.*);", response.text).group(1)
+    data = json.loads(data)
+    df = pd.DataFrame(data)
+    engine = get_mlb_db_engine()
+    df.to_sql('PlayerSpeed', engine, if_exists='replace', index=False)
+
+def update_oaa():
+    url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide&sort=5&sortDir=desc"
+
+    response = requests.get(url)
+    data = re.search(r"data = (.*);", response.text).group(1)
+    data = json.loads(data)
+    df = pd.DataFrame(data)
+
+    df = df[['year', 'entity_id', 'entity_name', 'outs_above_average_rhh', 'outs_above_average_lhh']].sort_values(by=['entity_id', 'year'])
+
+    means = df.groupby('year')[['outs_above_average_rhh', 'outs_above_average_lhh']].mean()
+    stds = df.groupby('year')[['outs_above_average_rhh', 'outs_above_average_lhh']].std()
+
+    for col in ('outs_above_average_rhh', 'outs_above_average_lhh'):
+        df[f'{col}_standardized'] = df.apply(lambda row: (row[col] - means.loc[row['year']][col]) / stds.loc[row['year']][col], axis=1)
+    
+    column_renames = {
+        'outs_above_average_rhh': 'oaa_rhh',
+        'outs_above_average_rhh_standardized': 'oaa_rhh_standardized',
+        'outs_above_average_lhh': 'oaa_lhh',
+        'outs_above_average_lhh_standardized': 'oaa_lhh_standardized'
+    }
+
+    df.rename(columns=column_renames, inplace=True)
+
+    engine = get_mlb_db_engine()
+    df.to_sql('TeamOAA', engine, if_exists='replace', index=False)
 
 def main():
     logger.info('Starting SQLite db creation/updates')
@@ -300,7 +372,13 @@ def main():
     update_sz_lookup()
 
     logger.info(f'Updating GamePkParkMapping')
-    update_stadium_table()
+    update_park_factors()
+
+    logger.info(f'Updating VenueGamePkMapping')
+    update_venue_game_pk_mapping()
+
+    logger.info(f'Updating TeamOAA')
+    update_oaa()
         
     logger.info('DB creation/updates complete')
 
