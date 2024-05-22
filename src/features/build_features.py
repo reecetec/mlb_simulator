@@ -4,6 +4,7 @@
 
 import sys
 import os
+import pathlib
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -86,7 +87,7 @@ def get_hit_classification_dataset(split=False, backtest_date=''):
         END AS simplified_outcome,
         game_pk, batter,
         case when inning_topbot='Top' then home_team else away_team end as 'fielding_team',
-        game_year, outs_when_up, 
+        game_year, outs_when_up, stand, 
         case when on_1b is not null then 1 else 0 end as on_1b,
         case when on_2b is not null then 1 else 0 end as on_2b,
         case when on_3b is not null then 1 else 0 end as on_3b,    
@@ -95,7 +96,8 @@ def get_hit_classification_dataset(split=False, backtest_date=''):
     FROM
         Statcast
     WHERE type='X'
-    and 
+    and game_year > 2020
+    and
     simplified_outcome &
     game_year & outs_when_up & of_fielding_alignment &
     launch_speed & launch_angle & spray_angle is not null
@@ -105,11 +107,23 @@ def get_hit_classification_dataset(split=False, backtest_date=''):
 
     speed_df = query_mlb_db('select mlb_id as batter, speed from PlayerSpeed;')
     venue_df = query_mlb_db('select game_pk, venue_name from VenueGamePkMapping;')
+    oaa_df = query_mlb_db("""
+        select o.year as 'game_year', t.STATCAST as 'fielding_team', o.oaa_rhh_standardized, o.oaa_lhh_standardized
+        from TeamOAA o
+        left join TeamIdMapping t on o.entity_id = t.TEAMID
+    """)
+    oaa_df['game_year'] = oaa_df['game_year'].astype(int)
+
     df = df.merge(venue_df, how='left', on='game_pk')
     df = df.merge(speed_df, how='left', on='batter')
+    df = df.merge(oaa_df, how='left', on=['game_year', 'fielding_team'])
     df['speed'] = df['speed'].astype(float)
     df['speed'] = df['speed'].fillna(df['speed'].mean())
-    df = df.drop(['batter', 'game_pk'], axis=1)
+    
+    
+    df['oaa'] = df.apply(lambda row: row['oaa_rhh_standardized'] if row['stand'] =='R' else row['oaa_lhh_standardized'], axis=1)
+
+    df = df.drop(['batter', 'game_pk', 'oaa_rhh_standardized', 'oaa_lhh_standardized'], axis=1)
 
     target_col = 'simplified_outcome'
     return get_xgb_set(df, target_col=target_col, split=split)

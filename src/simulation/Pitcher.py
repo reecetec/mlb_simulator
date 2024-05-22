@@ -38,7 +38,7 @@ class Pitcher(Player):
         logger.info(f'Starting init for {self.name}')
         #basic...
         self.throws = query_mlb_db(f'select p_throws from Statcast where pitcher={self.mlb_id} and p_throws is not null limit 1')['p_throws'][0]
-        self.throws = 1 if self.throws=='R' else 0
+        #self.throws = 1 if self.throws=='R' else 0
         self.cumulative_pitch_num = 0
 
         #fit models...
