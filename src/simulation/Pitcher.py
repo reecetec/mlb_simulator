@@ -1,10 +1,10 @@
-from Player import Player
 import sys
 import os
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
+from simulation.Player import Player
 from features.build_features import get_sequencing_dataset, get_pitches, PITCH_CHARACTERISITCS
 from data.data_utils import query_mlb_db
 
@@ -50,10 +50,12 @@ class Pitcher(Player):
         logger.info(f'Init complete for {self.name}')
 
     def fit_pitch_characteristic_generator(self):
-        logging.basicConfig(level=logging.CRITICAL, format=log_fmt)
         for batter_stands in ['L', 'R']:
             for pitch_type in self.pitch_arsenal:
                 df = get_pitches(self.mlb_id, batter_stands, pitch_type, self.backtest_date)
+                if df.empty:
+                    logger.warn(f'Distribution of {batter_stands}, {pitch_type} not fit')
+                    continue
                 metadata = SingleTableMetadata()
                 metadata.detect_from_dataframe(df)
                 synthesizer = GaussianCopulaSynthesizer(metadata,
@@ -63,7 +65,6 @@ class Pitcher(Player):
                                         )
                 synthesizer.fit(df)
                 self.pitch_characteristic_generators[batter_stands][pitch_type] = deepcopy(synthesizer)
-        logging.basicConfig(level=logging.INFO, format=log_fmt)
 
     def fit_pitch_sequencer(self):
         X, y, encoders, pitch_arsenal = get_sequencing_dataset(self.mlb_id, self.backtest_date)
@@ -88,7 +89,6 @@ class Pitcher(Player):
             'sz_bot': batter_stats['sz_bot']
         }])
 
-        #stand = 'R' if batter_stats['stand'] == 1 else 'L'
         synthetic_pitch = self.pitch_characteristic_generators[batter_stats['stand']][pitch_type].sample_remaining_columns(
             known_columns = cur_data
         )
@@ -96,7 +96,6 @@ class Pitcher(Player):
 
     def generate_pitch_type(self, game_state, pitcher_stats, batter_stats):
         # get df of current game state and batter stats to generate pitch
-        #batter_stats['stand'] = self.pitch_sequencer_encoders['stand'].transform([batter_stats['stand']])[0]
         combined_data = {**game_state, **pitcher_stats, **batter_stats}
         df = pd.DataFrame([combined_data])
 
@@ -105,6 +104,10 @@ class Pitcher(Player):
             if col in self.pitch_sequencer_encoders.keys():
                 df[col] = self.pitch_sequencer_encoders[col].transform(df[col])
 
+        #add in rare pitch columns (standardized, so 0 is average)
+        for col in self.pitch_sequencer_vars:
+            if col not in df.columns and ('_woba' in col or '_strike' in col):
+                df[col] = [0]
         #ensure ordering kept the same as when fit
         df = df[self.pitch_sequencer_vars]
 
@@ -125,8 +128,9 @@ if __name__ == '__main__':
     kukuchi = 579328
     jones = 683003
     gallen = 668678
+    gil = 661563
 
-    pitcher = Pitcher(mlb_id=jones)
+    pitcher = Pitcher(mlb_id=gil)
 
     game_state = {
         'game_year': 2023,

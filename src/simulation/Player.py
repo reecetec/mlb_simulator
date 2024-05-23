@@ -33,7 +33,7 @@ class Player:
             self.pos = player['POS']
 
     def print_info(self):
-        print(f'{self.name}, {self.team}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})')
+        print(f'{self.name}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})')
 
 if __name__ == '__main__':
     players = [Player(mlb_id=665742), Player(rotowire_id=18749), Player(mlb_id=683003)]

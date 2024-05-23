@@ -1,10 +1,10 @@
-from Player import Player
-
 import sys
 import os
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
+
+from simulation.Player import Player
 
 from data.data_utils import query_mlb_db
 from features.build_features import get_pitch_outcome_dataset_xgb, get_hit_outcome_dataset
@@ -45,7 +45,7 @@ class Batter(Player):
 
         self.fit_pitch_outcome_model()
         self.fit_hit_outcome_model()
-        logger.info(f'{self.name} stands {self.stand}')
+        #logger.info(f'{self.name} stands {self.stand}')
         logger.info(f'Init complete for {self.name}')
 
     # predicts strike, foul, etc.
