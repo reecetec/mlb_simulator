@@ -2,6 +2,7 @@
 from pathlib import Path
 from sqlalchemy import create_engine
 import pandas as pd
+import numpy as np
 import os
 import pathlib
 import subprocess
@@ -66,3 +67,20 @@ def git_clone(repo_url, save_path, logger):
     except subprocess.CalledProcessError as e:
         logger.error(f"Error cloning repository: {e}")
 
+
+def compute_xgboost_loglik(y_pred_proba, y_test, target_col):
+    loglik = 0
+    for idx, target in enumerate(y_test[target_col]):
+        loglik += np.log(y_pred_proba[idx, target])
+    return loglik
+
+def compute_cat_loglik(X_train, y_train, y_test, target_col):
+
+    df = pd.concat([X_train, y_train], axis=1)
+    
+    pitch_cat_prob = (df[target_col].value_counts() / len(df)) 
+    
+    loglik = 0
+    for target in y_test[target_col]:
+        loglik += np.log(pitch_cat_prob.loc[target])
+    return loglik

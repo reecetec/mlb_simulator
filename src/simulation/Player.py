@@ -12,22 +12,28 @@ class Player:
     # if player defined using rotowire, get mapping to mlb id, etc.
     def get_player_info(self):
         name_mapping_df = pd.read_csv(os.path.join(pathlib.Path.home(), 'sports', 'mlb_simulator', 'data', 'raw', 'name_map.csv'))
-
         if self.mlb_id:
             name_mapping_df.set_index('MLBID', inplace=True)
-            player = name_mapping_df.loc[self.mlb_id]
-            self.rotowire_id = int(player['ROTOWIREID'])
+            player = name_mapping_df.loc[[self.mlb_id]]
+            self.rotowire_id = int(player['ROTOWIREID'].iloc[0])
+            
         else:
             name_mapping_df.set_index('ROTOWIREID', inplace=True)
-            player = name_mapping_df.loc[self.rotowire_id]
-            self.mlb_id = int(player['MLBID'])
+            player = name_mapping_df.loc[[self.rotowire_id]]
+            self.mlb_id = int(player['MLBID'].iloc[0])
 
-        self.name = player['PLAYERNAME']
-        self.team = player['TEAM']
-        self.pos = player['POS']
+        if len(player) > 0:
+            self.name = player['PLAYERNAME'].iloc[0]
+            self.team = player['TEAM'].iloc[0]
+            self.pos = player['POS'].iloc[0]
+
+        else:
+            self.name = player['PLAYERNAME']
+            self.team = player['TEAM']
+            self.pos = player['POS']
 
     def print_info(self):
-        print(f'Name: {self.name} Team: {self.team} Pos: {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})')
+        print(f'{self.name}, {self.team}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})')
 
 if __name__ == '__main__':
     players = [Player(mlb_id=665742), Player(rotowire_id=18749), Player(mlb_id=683003)]

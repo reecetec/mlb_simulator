@@ -251,13 +251,7 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
                 else NULL
             end as pitch_outcome,
             
-            p_throws, pitch_number, strikes, balls,
-            
-            case
-                when bat_score > fld_score then 1
-                when bat_score < fld_score then -1
-                else 0
-            end as is_winning,
+            pitch_number, strikes, balls,
             
             release_speed, 
             release_spin_rate, 
@@ -276,7 +270,15 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
             
         from Statcast
         where batter={batter_id}
-        and pitch_outcome & p_throws & pitch_number & strikes & balls & is_winning &
+        and game_pk in (
+                select distinct game_pk
+                from Statcast
+                where batter = {batter_id}
+                    {backtest_date}
+                order by game_date desc
+                limit 324
+        )
+        and pitch_outcome & p_throws & pitch_number & strikes & balls &
             release_speed &
             release_spin_rate &
             release_extension &
@@ -525,11 +527,7 @@ def get_sequencing_dataset(pitcher, backtest_date=''):
        backtest_date = f'and game_date <= "{backtest_date}"' 
     
     pitcher_query_str = f"""
-        SELECT game_year, pitch_type, batter, pitch_number, strikes, balls, outs_when_up,
-            CASE
-                when stand='R' then 1
-                else 0
-            END AS stand,
+        SELECT game_year, pitch_type, batter, pitch_number, strikes, balls, outs_when_up, stand,
             CASE
                 when on_1b is not null then 1
                 else 0
@@ -560,7 +558,7 @@ def get_sequencing_dataset(pitcher, backtest_date=''):
                 where pitcher = {pitcher}
                     {backtest_date}
                 order by game_date desc
-                limit 34
+                limit 48
             )
         ORDER BY game_year, at_bat_number, pitch_number
     """

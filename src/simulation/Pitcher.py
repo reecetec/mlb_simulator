@@ -88,14 +88,15 @@ class Pitcher(Player):
             'sz_bot': batter_stats['sz_bot']
         }])
 
-        stand = 'R' if batter_stats['stand'] == 1 else 'L'
-        synthetic_pitch = self.pitch_characteristic_generators[stand][pitch_type].sample_remaining_columns(
+        #stand = 'R' if batter_stats['stand'] == 1 else 'L'
+        synthetic_pitch = self.pitch_characteristic_generators[batter_stats['stand']][pitch_type].sample_remaining_columns(
             known_columns = cur_data
         )
-        return synthetic_pitch
+        return dict(synthetic_pitch[PITCH_CHARACTERISITCS].iloc[0])
 
     def generate_pitch_type(self, game_state, pitcher_stats, batter_stats):
         # get df of current game state and batter stats to generate pitch
+        #batter_stats['stand'] = self.pitch_sequencer_encoders['stand'].transform([batter_stats['stand']])[0]
         combined_data = {**game_state, **pitcher_stats, **batter_stats}
         df = pd.DataFrame([combined_data])
 
@@ -117,7 +118,7 @@ class Pitcher(Player):
         pitch_type = self.generate_pitch_type(game_state, batter_stats, pitcher_stats)
         pitch_characteristics = self.generate_pitch_characteristics(pitch_type, batter_stats, game_state)
 
-        return pitch_type, pitch_characteristics[PITCH_CHARACTERISITCS]
+        return pitch_type, pitch_characteristics
 
 
 if __name__ == '__main__':
@@ -155,9 +156,8 @@ if __name__ == '__main__':
         'CU_woba': 0.5,
         'sz_top': 3.438,
         'sz_bot': 1.544,
-        'stand': 1,
+        'stand': 'R',
     }
-
         
     #print(pitcher.generate_pitch_type(game_state, pitcher_stats, batter_stats))
     pitch, pitch_char = pitcher.generate_pitch(game_state, batter_stats, pitcher_stats)
