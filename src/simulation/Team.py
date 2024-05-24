@@ -12,22 +12,21 @@ import pandas as pd
 
 
 class Team:
-    def __init__(self, rotowire_lineup, is_home) -> None:
+    def __init__(self, rotowire_lineup, is_home, backtest_date='') -> None:
         self.is_home = is_home
         self.name, self.logo, self.starting_pitcher, self.batting_lineup, self.lineup_confirmed = self.get_rotowire_info(rotowire_lineup, 'home' if self.is_home else 'visit')
         self.models_fit = False
         
         home_dir = pathlib.Path.home()
         team_id_map_dir = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'raw', 'team_id_map.csv')
-        self.team_id = pd.read_csv(team_id_map_dir).set_index('ROTOWIRETEAM').loc[[self.name]].iloc[0]['TEAMID']
+        team_id_map = pd.read_csv(team_id_map_dir)
+        self.team_id = team_id_map.set_index('ROTOWIRETEAM').loc[[self.name]].iloc[0]['TEAMID']
+        self.statcast_name = team_id_map.set_index('TEAMID').loc[[self.team_id]].iloc[0]['STATCAST']
 
     def fit_models(self):
         self.starting_pitcher = Pitcher(rotowire_id=float(self.starting_pitcher))
         self.batting_lineup = [Batter(rotowire_id=float(id)) for id in self.batting_lineup]
         self.models_fit = True
-        self.cur_pitcher = self.starting_pitcher
-        self.cur_batter = 0 #idx of batting_lineup
-
 
     def get_rotowire_info(self, game, team='home'):
 

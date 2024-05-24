@@ -91,7 +91,6 @@ def get_hit_classification_dataset(split=False, backtest_date=''):
         case when on_1b is not null then 1 else 0 end as on_1b,
         case when on_2b is not null then 1 else 0 end as on_2b,
         case when on_3b is not null then 1 else 0 end as on_3b,    
-        if_fielding_alignment, of_fielding_alignment,
         launch_speed, launch_angle, ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90)) as spray_angle
     FROM
         Statcast
