@@ -354,7 +354,7 @@ def main():
     logger.info('Starting SQLite db creation/updates')
 
     # only update this once a month.
-    if datetime.now().day == 1:
+    if datetime.now().day == 25:
         logger.info('Updating player name mapping')
         update_player_name_map()
         logger.info('Updating chadwick repo')
@@ -386,10 +386,10 @@ def main():
     update_venue_game_pk_mapping()
 
     logger.info(f'Updating TeamOAA')
-    update_oaa()
+    #update_oaa()
 
     logger.info(f'Updating PlayerSpeed')
-    update_run_speed()
+    #update_run_speed()
         
     logger.info('DB creation/updates complete')
 

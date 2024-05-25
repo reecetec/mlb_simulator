@@ -34,7 +34,7 @@ class Batter(Player):
         self.stand = query_mlb_db(f'select stand from Statcast where batter={self.mlb_id} and stand is not null limit 1')['stand'][0]
         self.pitch_woba = dict(query_mlb_db(f'select * from BatterAvgWobaByPitchType where batter={self.mlb_id};').drop('batter', axis=1).iloc[0])
         self.pitch_strike = dict(query_mlb_db(f'select * from BatterStrikePctByPitchType where batter={self.mlb_id};').drop('batter', axis=1).iloc[0])
-        self.speed = query_mlb_db(f'select speed from PlayerSpeed where mlb_id={self.mlb_id}')['speed'][0]
+        self.speed = float(query_mlb_db(f'select speed from PlayerSpeed where mlb_id={self.mlb_id}')['speed'][0])
         self.sz = dict(query_mlb_db(f'select sz_bot, sz_top from BatterStrikezoneLookup where batter={self.mlb_id}').iloc[0])
 
         self.stats = {f"{k}_strike": v for k, v in self.pitch_strike.items()}

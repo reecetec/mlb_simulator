@@ -39,7 +39,8 @@ class Pitcher(Player):
         #basic...
         self.throws = query_mlb_db(f'select p_throws from Statcast where pitcher={self.mlb_id} and p_throws is not null limit 1')['p_throws'][0]
         #self.throws = 1 if self.throws=='R' else 0
-        self.cumulative_pitch_num = 0
+        self.cumulative_pitch_number = 0
+        self.prev_pitch = None
 
         #fit models...
         self.pitch_characteristic_generators = {'L':{},
@@ -48,6 +49,12 @@ class Pitcher(Player):
         self.fit_pitch_characteristic_generator()
         logger.info(f'{self.name} throws {self.throws} with arsenal {self.pitch_arsenal}')
         logger.info(f'Init complete for {self.name}')
+
+    def get_pitcher_state(self):
+        return {
+            'prev_pitch': self.prev_pitch,
+            'cumulative_pitch_number': self.cumulative_pitch_number
+        }
 
     def fit_pitch_characteristic_generator(self):
         for batter_stands in ['L', 'R']:

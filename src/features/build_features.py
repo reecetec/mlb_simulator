@@ -539,11 +539,6 @@ def get_sequencing_dataset(pitcher, backtest_date=''):
                 when on_3b is not null then 1
                 else 0
             END AS on_3b,
-            CASE
-                when fld_score - bat_score > 0 then 1
-                when fld_score - bat_score = 0 then 0
-                else -1
-            END AS is_winning,
             LAG(pitch_type) OVER (PARTITION BY game_pk, pitcher, at_bat_number ORDER BY pitch_number) AS prev_pitch,
             ROW_NUMBER() OVER (PARTITION BY game_pk, pitcher ORDER BY at_bat_number, pitch_number) AS cumulative_pitch_number
         FROM Statcast
