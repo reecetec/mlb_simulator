@@ -21,6 +21,17 @@ class State:
         self.away_runs = away_runs
         self.away_cur_batter = away_cur_batter
     
+    def reset_game(self):
+        self.reset_count()
+        self.outs=0
+        self.inning=1
+        self.inning_is_top=True
+        self.bases = {'1b': None, '2b': None, '3b': None}
+        self.home_cur_batter=0
+        self.home_runs=0
+        self.away_cur_batter=0
+        self.away_runs=0
+    
     def get_game_state(self):
         return {
             'game_year': self.game_year,

@@ -72,6 +72,8 @@ class Game:
         away_score = self.game_state.away_runs
         if home_score > away_score:
             print(f'{home_score}-{away_score} {self.home_team.name}-{self.away_team.name}')
+        else:
+            print(f'{away_score}-{home_score} {self.away_team.name}-{self.home_team.name}')
 
     def get_game_state_transition_map(self):
         with open('game_state_t_probs.pkl', 'rb') as f:
@@ -86,9 +88,14 @@ class Game:
         permutations = list(product(range(3), [(False, False, False), (True, False, False), (False, True, False), (False, False, True),
                                             (True, True, False), (False, True, True), (True, False, True), (True, True, True)]))
         for state in permutations:
-            deterministic_transitions['K'][state] = (state[0] + 1, state[1], 0)
-        
+
             first, second, third = state[1]
+
+            k_first = '1b' if first else False
+            k_second = '2b' if second else False
+            k_third = '3b' if third else False
+
+            deterministic_transitions['K'][state] = (state[0] + 1, (k_first, k_second, k_third), 0)
         
             new_first, new_second, new_third = 'batter', False, False
             runs_scored = 0

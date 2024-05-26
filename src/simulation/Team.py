@@ -25,8 +25,8 @@ class Team:
 
     def fit_models(self):
         self.starting_pitcher = Pitcher(rotowire_id=float(self.starting_pitcher))
-        #self.batting_lineup = [Batter(rotowire_id=float(id)) for id in self.batting_lineup]
-        self.batting_lineup = [Batter(rotowire_id=float(id)) for id in [self.batting_lineup[0]]]
+        self.batting_lineup = [Batter(rotowire_id=float(id)) for id in self.batting_lineup]
+        #self.batting_lineup = [Batter(rotowire_id=float(id)) for id in [self.batting_lineup[0]]]
         self.models_fit = True
 
     def get_rotowire_info(self, game, team='home'):
