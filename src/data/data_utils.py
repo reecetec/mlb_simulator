@@ -1,6 +1,6 @@
 # connects to SQL database from data/raw and provides functions to query data
 from pathlib import Path
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine 
 import pandas as pd
 import numpy as np
 import os
@@ -34,7 +34,7 @@ def get_mlb_db_engine():
         print(f'Error creating engine: {e}')
         return None
 
-def query_mlb_db(query_str) -> pd.DataFrame:
+def query_mlb_db(query_str) -> pd.DataFrame | None:
     """Function to query the mlb database
 
     Args:
@@ -50,8 +50,6 @@ def query_mlb_db(query_str) -> pd.DataFrame:
     except Exception as e:
         print(f"Error executing query: {e}")
         return None
-
-
 
 def git_pull(repo_path, logger):
     try:

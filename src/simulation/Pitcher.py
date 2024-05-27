@@ -5,7 +5,11 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from simulation.Player import Player
-from features.build_features import get_sequencing_dataset, get_pitches, PITCH_CHARACTERISITCS
+
+from features.build_features import get_sequencing_dataset
+from features.build_features import get_pitches 
+from features.build_features import PITCH_CHARACTERISITCS
+
 from data.data_utils import query_mlb_db
 
 import xgboost as xgb
@@ -21,23 +25,26 @@ logging.getLogger('sdv.data_processing').setLevel(logging.CRITICAL)
 logging.getLogger('rdt.transformers').setLevel(logging.CRITICAL)
 logging.getLogger('sdv').propagate = False
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="sdv.single_table.base")
-
+warnings.filterwarnings("ignore",
+                        category=UserWarning,
+                        module="sdv.single_table.base")
 
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 
-
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
+
 
 class Pitcher(Player):
     def __init__(self, mlb_id=None, rotowire_id=None, backtest_date=''):
         super().__init__(mlb_id, rotowire_id, backtest_date)
         logger.info(f'Starting init for {self.name}')
         #basic...
-        self.throws = query_mlb_db(f'select p_throws from Statcast where pitcher={self.mlb_id} and p_throws is not null limit 1')['p_throws'][0]
+        self.throws = query_mlb_db(f'''select p_throws from Statcast where 
+                                   pitcher={self.mlb_id} and p_throws 
+                                   is not null limit 1''')['p_throws'][0]
         #self.throws = 1 if self.throws=='R' else 0
         self.cumulative_pitch_number = 0
         self.prev_pitch = None
@@ -47,7 +54,8 @@ class Pitcher(Player):
                                                 'R':{} }
         self.fit_pitch_sequencer()
         self.fit_pitch_characteristic_generator()
-        logger.info(f'{self.name} throws {self.throws} with arsenal {self.pitch_arsenal}')
+        logger.info(f'''{self.name} throws {self.throws} with 
+                    arsenal {self.pitch_arsenal}''')
         logger.info(f'Init complete for {self.name}')
 
     def get_pitcher_state(self):
@@ -59,9 +67,11 @@ class Pitcher(Player):
     def fit_pitch_characteristic_generator(self):
         for batter_stands in ['L', 'R']:
             for pitch_type in self.pitch_arsenal:
-                df = get_pitches(self.mlb_id, batter_stands, pitch_type, self.backtest_date)
+                df = get_pitches(self.mlb_id, batter_stands,
+                                 pitch_type, self.backtest_date)
                 if df.empty:
-                    logger.warn(f'Distribution of {batter_stands}, {pitch_type} not fit')
+                    logger.warn(f'''Distribution of {batter_stands},
+                                {pitch_type} not fit''')
                     continue
                 metadata = SingleTableMetadata()
                 metadata.detect_from_dataframe(df)
@@ -74,7 +84,9 @@ class Pitcher(Player):
                 self.pitch_characteristic_generators[batter_stands][pitch_type] = deepcopy(synthesizer)
 
     def fit_pitch_sequencer(self):
-        X, y, encoders, pitch_arsenal = get_sequencing_dataset(self.mlb_id, self.backtest_date)
+        X, y, encoders, pitch_arsenal = (
+                get_sequencing_dataset(self.mlb_id,self.backtest_date)
+            )
         self.pitch_arsenal = pitch_arsenal
         params = {
             'objective' : 'multi:softprob',

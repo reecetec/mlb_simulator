@@ -269,14 +269,14 @@ def get_pitch_outcome_dataset_xgb(batter_id, split=False, backtest_date=''):
             
         from Statcast
         where batter={batter_id}
-        and game_pk in (
+        /* and game_pk in (
                 select distinct game_pk
                 from Statcast
                 where batter = {batter_id}
                     {backtest_date}
                 order by game_date desc
                 limit 324
-        )
+        ) */
         and pitch_outcome & p_throws & pitch_number & strikes & balls &
             release_speed &
             release_spin_rate &
