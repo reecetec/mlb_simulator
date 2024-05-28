@@ -29,10 +29,8 @@ logger = logging.getLogger(__name__)
 
 DB_LOCATION = get_db_location()
 
-def update_statcast_table():
-    """ Uses pybaseball to download statcast data from 2018 locally.
-    """
 
+def validate_db_and_table(table_name):
     if not Path(DB_LOCATION).exists():
         logger.critical(f'''mlb.db doesnt exist at {DB_LOCATION},
                         something went wrong in the creation''')
@@ -45,8 +43,19 @@ def update_statcast_table():
         exit()
 
     inspector = inspect(engine)
-    statcast_table_exists = 'Statcast' in inspector.get_table_names()
+    table_exists = table_name in inspector.get_table_names()
 
+    return engine, table_exists
+
+
+
+def update_statcast_table():
+    """ Uses pybaseball to download statcast data from 2018 locally.
+    """
+
+    # get engine, check if table exists
+    engine, statcast_table_exists = validate_db_and_table('Statcast')
+    
     # if no data uploaded, get all data from 2018 to today in yr chunks
     # (avoid memory overload)
     if not statcast_table_exists:
@@ -171,6 +180,7 @@ def update_woba_strike_tables(
         To be used in the pitch_type generator
     """
 
+    # when backtesting, use only data from past seasons.
     if backtest_yr:
         backtest_yr = f'and game_year < {backtest_yr}'
     else:
@@ -185,6 +195,9 @@ def update_woba_strike_tables(
             {backtest_yr}
     """)
 
+    if batter_df is None:
+        logger.critical('Error querying Statcast')
+        exit()
 
     """
     get each batters strike percentage for each pitch in pitch arsenal given
@@ -269,6 +282,10 @@ def update_player_name_map():
         print(f"Failed to download CSV file. Status code: {res.status_code}")
 
 def update_similar_sz_table():
+    """ Creates cluster of players with similar strikezones. Was used to
+        transfer learn neural networks. XGBoost being used make this less
+        useful.
+    """
 
     player_sz_data = query_mlb_db('''select batter, avg(sz_top) as sz_top,
                                     avg(sz_bot) as sz_bot
@@ -277,6 +294,9 @@ def update_similar_sz_table():
                                     group by batter
                                   ''')
     
+    if player_sz_data is None:
+        logger.critical('Error querying Statcast')
+
     X = player_sz_data[['sz_top', 'sz_bot']].values
     
     # normalization or standardization
@@ -325,28 +345,6 @@ def update_sz_lookup():
         print(e.args)
 
 
-
-def update_stadium_table_old():
-    date_range_df = query_mlb_db('select min(game_date) as min_date, max(game_date) as max_date from Statcast')
-    min_dt = datetime.strptime(date_range_df['min_date'][0], '%Y-%m-%d %H:%M:%S.%f')
-    min_date = min_dt.strftime('%m/%d/%Y')
-    max_dt = datetime.strptime(date_range_df['max_date'][0], '%Y-%m-%d %H:%M:%S.%f')
-    max_date = max_dt.strftime('%m/%d/%Y')
-    games = statsapi.schedule(start_date=min_date,end_date=max_date)
-    games_df = pd.DataFrame(games)[['game_id', 'game_datetime', 'game_type', 'venue_id', 'venue_name']]
-
-    engine = get_mlb_db_engine()
-    games_df.to_sql('GamePkParkMapping', engine, if_exists='replace', index=False)
-
-def update_park_factors():
-    url = "https://baseballsavant.mlb.com/leaderboard/statcast-park-factors?type=distance-all&year=2023&batSide=&stat=index_wOBA&condition=All&rolling="
-    response = requests.get(url)
-    data = re.search(r"data = (.*);", response.text).group(1)
-    data = json.loads(data)
-    df = pd.DataFrame(data)
-    engine = get_mlb_db_engine()
-    df.to_sql('ParkFactors', engine, if_exists='replace', index=False)
-
 def update_venue_game_pk_mapping():
     game_pks = query_mlb_db('select distinct game_pk from Statcast')
     venue_game_pks = query_mlb_db('select distinct game_pk from VenueGamePkMapping')
@@ -373,9 +371,7 @@ def update_venue_game_pk_mapping():
     else:
         logger.info(f'Successfully uploaded {0} rows to table VenueGamePkMapping')
 
-
 def update_oaa():
-    #url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide&sort=5&sortDir=desc"
     url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide"
     response = requests.get(url)
     data = re.search(r"data = (.*);", response.text).group(1)
@@ -420,9 +416,8 @@ def update_run_speed():
     df.to_sql('PlayerSpeed', engine, if_exists='replace', index=False)
 
 def main():
+
     logger.info('Starting SQLite db creation/updates')
-
-
     # if database location does not exist, create directories
     if not os.path.exists(DB_LOCATION):
         #create dirs
@@ -433,30 +428,33 @@ def main():
         conn = sqlite3.connect(DB_LOCATION)
         conn.close()
 
-    # only update this once a month, don't want to hit url often
-    if datetime.now().day == 25:
-        logger.info('Updating player name mapping')
-        update_player_name_map()
-        logger.info('Updating chadwick repo')
-        update_chadwick_repo()
+    #################### DAILY UPDATES #####################################
 
     # update tables
     logger.info(f'Updating Statcast')
     update_statcast_table()
 
-    #logger.info(
-    #        f'Updating BatterStrikePctByPitchType & BatterAvgWobaByPitchType'
-    #    )
-    #update_woba_strike_tables()
+    logger.info(f'Updating BatterStrikezoneLookup')
+    update_sz_lookup()
+
+    #################### MONTHLY UPDATES ###################################
+    if datetime.now().day == 1:
+        logger.info('Updating player name mapping')
+        update_player_name_map()
+
+        logger.info(
+                f'Updating BatterStrikePctByPitchType & BatterAvgWobaByPitchType'
+            )
+        update_woba_strike_tables()
+
+
+    #################### OUTDATED ##########################################
 
     #logger.info(f'Updating BatterStrikezoneCluster')
     #update_similar_sz_table()
 
-    #logger.info(f'Updating BatterStrikezoneLookup')
-    #update_sz_lookup()
-
-    #logger.info(f'Updating GamePkParkMapping')
-    #update_park_factors()
+    #logger.info('Updating chadwick repo')
+    #update_chadwick_repo()
 
     #logger.info(f'Updating VenueGamePkMapping')
     #update_venue_game_pk_mapping()
@@ -466,8 +464,8 @@ def main():
 
     #logger.info(f'Updating PlayerSpeed')
     #update_run_speed()
-    #    
-    #logger.info('DB creation/updates complete')
+        
+    logger.info('DB creation/updates complete')
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
