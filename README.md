@@ -44,7 +44,7 @@ flowchart TD
     D -- no --> G[Evolve GameState, check if Batter is out/walks, change at bat, etc.];
     F --> H[Hit classifier runs as a function of the hit characteristics, venue, batter speed];
     H --> G
-    H --> I[Evolve remaining bases (if batter hits double, how do base runners react?)]
+    H --> I[Evolve remaining bases: if batter hits double, how do base runners react?]
 ```
 
 
