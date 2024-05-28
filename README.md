@@ -36,9 +36,15 @@ game. The flow is as follows:
 
 ```mermaid
 flowchart TD
-    A[Current Game State] --> B[Pitcher generates pitch type];
-    B --> C[Pitcher generates pitch characteristics];
+    A[Get current GameState] --> B[Pitcher generates pitch type as function of GameState];
+    B --> C[Pitcher generates pitch characteristics as function of GameState];
     C --> D[Batter gets hit/strike/ball/foul/hit by pitch];
+    D --> E{Did batter hit the ball?};
+    D -- yes --> F[Batter generates hit characteristics];
+    D -- no --> G[Evolve GameState, check if Batter is out/walks, change at bat, etc.];
+    F --> H[Hit classifier runs as a function of the hit characteristics, venue, batter speed];
+    H --> G
+    H --> I[Evolve remaining bases (if batter hits double, how do base runners react?)]
 ```
 
 
