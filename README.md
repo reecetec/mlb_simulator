@@ -8,6 +8,38 @@ Todo:
  - Improve Batter strike/ball/hit etc. model, maybe use less features
  - Use Copulas for pitch generation
  - Fix game state transition probabilities edge cases
+ - Implement simulation logic from notebook 7.0 in simulation class
+ - Fix messy imports 
+
+## Getting Started
+
+1. Clone the repo
+2. Install the requirements.txt (in a conda env or venv), and then run the following in the project root to create sqlite db
+```sh
+make data
+```
+* Note: This downloads Statcast data from 2018. It will take a while.
+* Sometimes pybaseball will run into an error, if so, rerun above command to continue setup
+* By default, the database will be located at ~/sports/mlb_simulator/data/databases/mlb.db. 
+* If you wish to change this, modify the path in /src/data/data_utils.py
+
+Once the database has been set up:
+
+```sh
+pip install .
+```
+
+## Usage
+
+src/simulation contains objects which interact to simulate an entire baseball 
+game. The flow is as follows:
+
+```mermaid
+flowchart TD
+    A[Current Game State] -->
+    B[Pitcher generates pitch type] -->
+    C[Pitcher generates pitch characteristics] -->
+    D[Batter gets hit/strike/ball/foul/hit by pitch];
 
 
 Project Organization

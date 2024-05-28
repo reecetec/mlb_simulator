@@ -1,33 +1,31 @@
 # connects to SQL database from data/raw and provides functions to query data
-from pathlib import Path
-from sqlalchemy import create_engine 
+import pathlib
+from sqlalchemy import create_engine, engine 
 import pandas as pd
 import numpy as np
 import os
 import pathlib
 import subprocess
 
-def get_db_locations():
-    """gets paths for database and table schemas
+def get_db_location():
+    """gets path for database 
 
     Returns:
         str, str: db, table schema paths
     """
     home_dir = pathlib.Path.home()
+    DB_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
+                           'databases', 'mlb.db')
+    return DB_PATH 
 
-    DB_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'databases', 'mlb.db')
-    TABLE_SCHEMA_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data', 'databases', 'table_schema.json')
-
-    return DB_PATH, TABLE_SCHEMA_PATH 
-
-def get_mlb_db_engine():
+def get_mlb_db_engine() -> engine.Engine | None:
     """Get an engine for the database. Can be used to run an upload script, etc.
 
     Returns:
         engine: sql engine
     """
     try:
-        db_path, _ = get_db_locations()
+        db_path = get_db_location()
         engine = create_engine(f'sqlite:///{db_path}', echo=False)
         return engine
     except Exception as e:
@@ -66,19 +64,4 @@ def git_clone(repo_url, save_path, logger):
         logger.error(f"Error cloning repository: {e}")
 
 
-def compute_xgboost_loglik(y_pred_proba, y_test, target_col):
-    loglik = 0
-    for idx, target in enumerate(y_test[target_col]):
-        loglik += np.log(y_pred_proba[idx, target])
-    return loglik
 
-def compute_cat_loglik(X_train, y_train, y_test, target_col):
-
-    df = pd.concat([X_train, y_train], axis=1)
-    
-    pitch_cat_prob = (df[target_col].value_counts() / len(df)) 
-    
-    loglik = 0
-    for target in y_test[target_col]:
-        loglik += np.log(pitch_cat_prob.loc[target])
-    return loglik

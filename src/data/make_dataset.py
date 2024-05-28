@@ -5,13 +5,12 @@ import time
 from tqdm import tqdm
 import logging
 from pathlib import Path
-from dotenv import find_dotenv, load_dotenv
 import requests
 import pathlib
 import os
 import sqlite3
 import json
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import inspect, text
 import pandas as pd
 from datetime import datetime, timedelta
 import re
@@ -21,104 +20,58 @@ from pybaseball import statcast
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
-from data_utils import get_mlb_db_engine, query_mlb_db, get_db_locations
+from data_utils import get_mlb_db_engine, query_mlb_db, get_db_location
 from data_utils import git_clone, git_pull
 import statsapi
 
-DB_LOCATION, TABLE_SCHEMAS_PATH = get_db_locations()
-
-if not os.path.exists(DB_LOCATION):
-    #create dirs
-    os.makedirs(os.path.dirname(DB_LOCATION), exist_ok=True)
-
-    #init empty sqlite db
-    conn = sqlite3.connect(DB_LOCATION)
-    conn.close()
-
-#if not os.path.exists(TABLE_SCHEMAS_PATH):
-#    print('here')
-#    exit()
 
 logger = logging.getLogger(__name__)
 
-def validate_schema_path():
-    """Validates table schema file exists, otherwise script will end
-    """
-    if not Path(TABLE_SCHEMAS_PATH).exists():
-        logger.critical(f'table_schema.json not found at {TABLE_SCHEMAS_PATH}')
-        exit()
-
-def get_table_schema(table_name):
-    """Check if table is defined in table_schema json, and if so, return it,
-        otherwise, throw error
-
-    Args:
-        table_name (Str): table name of schema to look up
-
-    Returns:
-        Dict: table schema 
-    """
-    with open(TABLE_SCHEMAS_PATH, 'r') as file:
-        schema = json.load(file)
-    
-    # validate table schema exists
-    if table_name in schema:
-        table_schema = schema[table_name]
-        return table_schema
-    else:
-        logger.critical(f'no {table_name} schema found in table_schema.json')
-        exit()
-
-
-def create_table(table_name = 'Statcast'):
-    """Creates tables in data/databases/mlb.db for table schemas found in the
-        table_schema.json file
-
-    Args:
-        table_name (str, optional): name of table to initialize from
-            table_schema.json file. Defaults to 'Statcast'.
-    """
-    #validate_schema_path()
-    table_schema = get_table_schema(table_name)
-
-    # initialize db
-    conn = sqlite3.connect(DB_LOCATION)
-    c = conn.cursor()
-    # generate create table string from schema
-    create_table_sql = f"CREATE TABLE IF NOT EXISTS {table_name} ("
-    for column in table_schema['columns']:
-        create_table_sql += f"{column['name']} {column['type']}, "
-    # add the primary key constraint
-    if 'primaryKey' in table_schema:
-        create_table_sql += f"PRIMARY KEY ({
-            ', '.join(table_schema['primaryKey'])
-            })"
-    create_table_sql += ")"
-
-    # execute the SQL statement
-    c.execute(create_table_sql)
-    conn.commit()
-    conn.close()
-    logger.info(f'Creation successful for {table_name}')
+DB_LOCATION = get_db_location()
 
 def update_statcast_table():
+    """ Uses pybaseball to download statcast data from 2018 locally.
+    """
 
     if not Path(DB_LOCATION).exists():
-        logger.critical('''mlb.db doesnt exist, something went wrong in the
-                        creation''')
+        logger.critical(f'''mlb.db doesnt exist at {DB_LOCATION},
+                        something went wrong in the creation''')
         exit()
 
-    engine = create_engine(f'sqlite:///{DB_LOCATION}', echo=False)
+    # check to see if statcast table exists
+    engine = get_mlb_db_engine() 
+    if engine is None:
+        logger.critical('Error creating engine')
+        exit()
+
     inspector = inspect(engine)
     statcast_table_exists = 'Statcast' in inspector.get_table_names()
 
     # if no data uploaded, get all data from 2018 to today in yr chunks
     # (avoid memory overload)
     if not statcast_table_exists:
+        logger.info('Running creation/init upload for Statcast table')
+
+        #create table using schema from ./Statcast_create.sql
+        try:
+            with open('./src/data/Statcast_create.sql', 'r') as f:
+                statcast_create_script = f.read()
+            scripts = statcast_create_script.split(';')
+            with engine.connect() as connection:
+                for script in scripts:
+                    if script.strip():
+                        connection.execute(text(script))
+        except Exception as e:
+            logger.critical(
+                    'Unable to create table via src/data/Statcast_create.sql'
+                    )
+            print(e)
+            exit()
+            
         for year in range(2018, datetime.now().year + 1):
             df = statcast(f'{year}-01-01', f'{year+1}-01-01', verbose=False)
             if not df.empty:
-                # drop garbage
+                # drop duplicates if exist
                 df = df.drop(columns=['pitcher.1',
                                       'fielder_2.1'],
                              errors='ignore')
@@ -127,49 +80,95 @@ def update_statcast_table():
                 # upload
                 df.to_sql('Statcast', engine, if_exists='append', index=False,
                         chunksize=1000)
-            logger.info((f'Successfully uploaded statcast data '
-                         f'from {year} to {year + 1}'))
+            logger.info((f'\nSuccessfully uploaded statcast data '
+                         f'from {year} to {year + 1}\n'))
 
     # otherwise, get all data from max date in table
     else:
         max_date = pd.read_sql('select max(game_date) from Statcast',
                                engine)['max(game_date)'].iloc[0]
-        today = datetime.today().strftime('%Y-%m-%d')
+        today = datetime.today()
+        max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S.%f')
+        
+        # if over 1 year of data missing, query year by year
+        if today.year - max_date.year > 1:
+            for year in range(max_date.year, today.year + 1):
+                df = statcast(f'{year}-01-01',
+                              f'{year+1}-01-01',
+                              verbose=False)
+                if not df.empty:
+                    # drop duplicates if exist
+                    df = df.drop(columns=['pitcher.1',
+                                          'fielder_2.1'],
+                                 errors='ignore')
+                    #make sure sql uses datetime type
+                    df['game_date'] = pd.to_datetime(df['game_date'])
 
-        max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S.%f'
-                                     ).strftime('%Y-%m-%d')
-        key_date = (datetime.strptime(max_date,
-                                      '%Y-%m-%d') - timedelta(days=2)
-                    ).strftime('%Y-%m-%d')
-        df = statcast(max_date, today, verbose=False)
-        if not df.empty:
-            # drop garbage
-            df.drop(columns=['pitcher.1','fielder_2.1'],
-                    errors='ignore', inplace=True)
+                    #ensure no duplicates for potential overlapping yr
+                    if year == max_date.year:
+                        cur_keys = pd.read_sql(
+                                f'''select game_date, game_pk, at_bat_number,
+                                pitch_number
+                                from Statcast where game_date >= {year}''',
+                                engine)
+                        cur_keys['game_date'] = pd.to_datetime(
+                                cur_keys['game_date'])
+                        merged = pd.merge(
+                                df,cur_keys,how='outer',indicator=True)
+                        upload_df = merged.loc[merged["_merge"] == "left_only"
+                                               ].drop("_merge", axis=1)
+                    else:
+                        upload_df = df
 
-            # ensure no duplicates
-            cur_keys = pd.read_sql(
-                    f'''select game_date, game_pk, at_bat_number, pitch_number
-                    from Statcast where game_date > {key_date}''',
-                    engine)
-            cur_keys['game_date'] = pd.to_datetime(cur_keys['game_date'])
-            merged = pd.merge(df,cur_keys,how='outer',indicator=True)
-            upload_df = merged.loc[merged["_merge"] == "left_only"
-                                   ].drop("_merge", axis=1)
+                    upload_df.to_sql('Statcast', engine, if_exists='append',
+                                     index=False, chunksize=1000)
+                    
+                    logger.info(f'Successfully uploaded {
+                        len(upload_df)
+                        } rows to table Statcast')
 
-            upload_df.to_sql('Statcast', engine, if_exists='append',
-                             index=False, chunksize=1000)
-            
-            logger.info(f'Successfully uploaded {
-                len(upload_df)
-                } rows to table Statcast')
+
         else:
-            logger.info(f'Statcast query was empty')
+            # query 2 days of previous keys to ensure no duplicates 
+            key_date = (max_date - timedelta(days=2)).strftime('%Y-%m-%d')
+            df = statcast(max_date.strftime('%Y-%m-%d'),
+                          today.strftime('%Y-%m-%d'),
+                          verbose=False)
+            if not df.empty:
+                # drop garbage
+                df.drop(columns=['pitcher.1','fielder_2.1'],
+                        errors='ignore', inplace=True)
+
+                # ensure no duplicates
+                cur_keys = pd.read_sql(
+                        f'''select game_date, game_pk, at_bat_number,
+                        pitch_number
+                        from Statcast where game_date > {key_date}''',
+                        engine)
+                cur_keys['game_date'] = pd.to_datetime(cur_keys['game_date'])
+                merged = pd.merge(df,cur_keys,how='outer',indicator=True)
+                upload_df = merged.loc[merged["_merge"] == "left_only"
+                                       ].drop("_merge", axis=1)
+
+                upload_df.to_sql('Statcast', engine, if_exists='append',
+                                 index=False, chunksize=1000)
+                
+                logger.info(f'Successfully uploaded {
+                    len(upload_df)
+                    } rows to table Statcast')
+            else:
+                logger.info(f'Statcast query was empty')
 
 
 def update_woba_strike_tables(
         min_pitch_count=50, min_hit_count=15, backtest_yr=None
         ):
+    """ Sets up 2 tables in mlb.db containing the batter id,
+        first the batter's strike percentage into a given pitch type,
+        second, the batter's average woba given a hit.
+
+        To be used in the pitch_type generator
+    """
 
     if backtest_yr:
         backtest_yr = f'and game_year < {backtest_yr}'
@@ -405,6 +404,7 @@ def update_oaa():
 def update_run_speed():
     url = f"https://baseballsavant.mlb.com/leaderboard/sprint_speed?min_season=2021&max_season={datetime.now().year}&position=&team=&min=5"
     response = requests.get(url)
+    
     data = re.search(r"data = (.*);", response.text).group(1)
     data = json.loads(data)
     df = pd.DataFrame(data)[['runner_id', 'r_sprint_speed_top50percent']]
@@ -421,7 +421,18 @@ def update_run_speed():
 def main():
     logger.info('Starting SQLite db creation/updates')
 
-    # only update this once a month.
+
+    # if database location does not exist, create directories
+    if not os.path.exists(DB_LOCATION):
+        #create dirs
+        logger.info(f'Creating database at {DB_LOCATION}')
+        os.makedirs(os.path.dirname(DB_LOCATION), exist_ok=True)
+
+        #init empty sqlite db
+        conn = sqlite3.connect(DB_LOCATION)
+        conn.close()
+
+    # only update this once a month, don't want to hit url often
     if datetime.now().day == 25:
         logger.info('Updating player name mapping')
         update_player_name_map()
@@ -432,35 +443,38 @@ def main():
     logger.info(f'Updating Statcast')
     update_statcast_table()
 
-    logger.info(f'Updating BatterBatterStrikePctByPitchType and BatterAvgWobaByPitchType')
-    update_woba_strike_tables()
+    #logger.info(
+    #        f'Updating BatterStrikePctByPitchType & BatterAvgWobaByPitchType'
+    #    )
+    #update_woba_strike_tables()
 
-    logger.info(f'Updating BatterStrikezoneCluster')
-    update_similar_sz_table()
+    #logger.info(f'Updating BatterStrikezoneCluster')
+    #update_similar_sz_table()
 
-    logger.info(f'Updating BatterStrikezoneLookup')
-    update_sz_lookup()
+    #logger.info(f'Updating BatterStrikezoneLookup')
+    #update_sz_lookup()
 
-    logger.info(f'Updating GamePkParkMapping')
-    update_park_factors()
+    #logger.info(f'Updating GamePkParkMapping')
+    #update_park_factors()
 
-    logger.info(f'Updating VenueGamePkMapping')
-    update_venue_game_pk_mapping()
+    #logger.info(f'Updating VenueGamePkMapping')
+    #update_venue_game_pk_mapping()
 
-    logger.info(f'Updating TeamOAA')
-    update_oaa()
+    #logger.info(f'Updating TeamOAA')
+    #update_oaa()
 
-    logger.info(f'Updating PlayerSpeed')
-    update_run_speed()
-        
-    logger.info('DB creation/updates complete')
+    #logger.info(f'Updating PlayerSpeed')
+    #update_run_speed()
+    #    
+    #logger.info('DB creation/updates complete')
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
-
     # find .env automagically by walking up directories until it's found, then
     # load up the .env entries as environment variables
-    load_dotenv(find_dotenv())
+    #load_dotenv(find_dotenv())
 
     main()
+
+

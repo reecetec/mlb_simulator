@@ -182,6 +182,19 @@ def param_optim(model, X_train, X_test, y_train, y_test):
 
     return all_best_params
 
+def compute_model_loglik(y_pred_proba, y_test, target_col):
+    loglik = 0
+    for idx, target in enumerate(y_test[target_col]):
+        loglik += np.log(y_pred_proba[idx, target])
+    return loglik
+
+def compute_cat_loglik(X_train, y_train, y_test, target_col):
+    df = pd.concat([X_train, y_train], axis=1)
+    pitch_cat_prob = (df[target_col].value_counts() / len(df)) 
+    loglik = 0
+    for target in y_test[target_col]:
+        loglik += np.log(pitch_cat_prob.loc[target])
+    return loglik
 
 if __name__ == '__main__':
     vladdy = 665489
