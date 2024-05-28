@@ -23,7 +23,7 @@ def categorical_model_pipeline(model, model_params, data, target_col,
     X_test, y_test = None, None
     if split_data:
         X_train, X_test, y_train, y_test = train_test_split(
-                features, target, test_size=0.1, shuffle=False)
+                features, target, test_size=0.05, shuffle=False)
     else:
         X_train, y_train = features, target
 
@@ -64,6 +64,23 @@ def sample_predictions(classifier, X):
 def categorical_chisquare(model, label_encoder, X_test, y_test):
     """ Run a hypothesis test that generated data is similar in dist to actual
     """
+    hyp_tests = []
+    for _ in range(1000):
+        sampled_preds = sample_predictions(model, X_test)
+        pred_counts = pd.DataFrame(
+                label_encoder.inverse_transform(sampled_preds)
+            ).value_counts()
+        actual_counts = pd.DataFrame(
+                label_encoder.inverse_transform(y_test)
+            ).value_counts()
+
+        pred_counts = pred_counts.reindex(actual_counts.index, fill_value=0)
+        chi2_stat, p_value = chisquare(f_obs=actual_counts, f_exp=pred_counts)
+        if p_value < 0.05:
+            hyp_tests.append('different')
+        else:
+            hyp_tests.append('similar')
+
     sampled_preds = sample_predictions(model, X_test)
     pred_counts = pd.DataFrame(
             label_encoder.inverse_transform(sampled_preds)
@@ -78,6 +95,7 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
     print("Chi-square statistic:", chi2_stat)
     print("p-value:", p_value)
     
+
     # Interpretation of the result
     if p_value < 0.05:
         print(
@@ -89,6 +107,7 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
             "The distributions are not significantly different "
             "(fail to reject the null hypothesis)."
             )
+    print(pd.DataFrame(hyp_tests, columns=['test_results']).value_counts())
 
 def categorical_fisher_exact(model, label_encoder, X_test, y_test):
     """ Run a hypothesis test that generated data is similar in distribution to actual using Fisher's exact test """
@@ -122,24 +141,22 @@ def classifier_report(model, label_encoder, X_test, y_test):
                                 label_encoder.inverse_transform(y_pred)))
     print('Log Loss:', log_loss(y_test, y_prob))
 
-    for _ in range(3):
-        categorical_chisquare(model, label_encoder, X_test, y_test)
-        categorical_fisher_exact(model, label_encoder, X_test, y_test)
+    categorical_chisquare(model, label_encoder, X_test, y_test)
 
 def param_optim(model, X_train, X_test, y_train, y_test):
 
     grouped_param_grid = [
         {
-            'classifier__max_depth':[2, 3, 4, 5, 7],
-            'classifier__min_child_weight': [1, 3, 5, 7]
+            'classifier__max_depth':[2, 3, 5],
+            'classifier__min_child_weight': [1, 3, 5]
         },
         {
-            'classifier__subsample': [0.5, 0.7, 0.9, 1],
-            'classifier__colsample_bytree': [0.5, 0.7, 0.9, 1]
+            'classifier__subsample': [0.5, 0.7, 0.9],
+            'classifier__colsample_bytree': [0.5, 0.7, 0.9]
         },
         {
-            'classifier__learning_rate': [0.001, 0.01, 0.05, 0.1, 0.2],
-            'classifier__n_estimators': [50, 100, 150, 200]
+            'classifier__learning_rate': [0.01, 0.05, 0.1],
+            'classifier__n_estimators': [50, 100, 200]
         }
     ]
 
@@ -174,17 +191,26 @@ if __name__ == '__main__':
     showtime = 660271
     crowser = 681297
 
-    batter_id = crowser
+    batter_id = vladdy
     
     params = {'eval_metric':'mlogloss'}
     data = query_mlb_db(f'''
         select 
             case
-                when description='swinging_strike' or description='swinging_strike_blocked' or description='called_strike' or description='foul_tip' 
-                    or description='swinging_pitchout' then 'strike'
-                when description='foul' or description='foul_pitchout' then 'foul'
-                when description='ball' or description='blocked_ball' or description='pitchout' then 'ball'
-                when description='hit_by_pitch' then 'hit_by_pitch'
+                when description='swinging_strike' 
+                        or description='swinging_strike_blocked' 
+                        or description='called_strike' 
+                        or description='foul_tip' 
+                        or description='swinging_pitchout'
+                    then 'strike'
+                when description='foul'
+                        or description='foul_pitchout'
+                    then 'foul'
+                when description='ball'
+                        or description='blocked_ball'
+                        or description='pitchout'
+                    then 'ball'
+                /* when description='hit_by_pitch' then 'hit_by_pitch' */
                 when description='hit_into_play' then 'hit_into_play'
                 else NULL
             end as pitch_outcome,
@@ -202,6 +228,9 @@ if __name__ == '__main__':
         is not null
         order by game_date asc, at_bat_number asc, pitch_number asc;
                         ''')
+    data = data.tail(8000)
+
+
     target_col = 'pitch_outcome'
 
     model, le, X_train, X_test, y_train, y_test = categorical_model_pipeline(
