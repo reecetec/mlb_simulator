@@ -54,7 +54,7 @@ def update_statcast_table():
 
         #create table using schema from ./Statcast_create.sql
         try:
-            with open('./src/data/Statcast_create.sql', 'r') as f:
+            with open('./mlb_simulator/data/Statcast_create.sql', 'r') as f:
                 statcast_create_script = f.read()
             scripts = statcast_create_script.split(';')
             with engine.connect() as connection:
@@ -63,7 +63,8 @@ def update_statcast_table():
                         connection.execute(text(script))
         except Exception as e:
             logger.critical(
-                    'Unable to create table via src/data/Statcast_create.sql'
+                    ('Unable to create table via '),
+                    ('mlb_simulator/data/Statcast_create.sql')
                     )
             print(e)
             exit()

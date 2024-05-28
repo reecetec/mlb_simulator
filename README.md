@@ -21,7 +21,7 @@ make data
 * Note: This downloads Statcast data from 2018. It will take a while.
 * Sometimes pybaseball will run into an error, if so, rerun above command to continue setup
 * By default, the database will be located at ~/sports/mlb_simulator/data/databases/mlb.db. 
-* If you wish to change this, modify the path in /src/data/data_utils.py
+* If you wish to change this, modify the path in mlb_simulator/data/data_utils.py
 
 Once the database has been set up:
 
@@ -31,7 +31,7 @@ pip install .
 
 ## Usage
 
-src/simulation contains objects which interact to simulate an entire baseball 
+mlb_simulator/simulation contains objects which interact to simulate an entire baseball 
 game. The flow is as follows:
 
 ```mermaid
@@ -78,7 +78,7 @@ Project Organization
     │                         generated with `pip freeze > requirements.txt`
     │
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
+    ├── mlb_simulator      <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
     │   ├── data           <- Scripts to download or generate data

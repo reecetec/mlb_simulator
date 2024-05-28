@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from src.data.data_utils import query_mlb_db
+from mlb_simulator.data.data_utils import query_mlb_db
 import xgboost as xgb
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
