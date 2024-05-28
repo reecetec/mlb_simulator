@@ -39,6 +39,7 @@ flowchart TD
     A[Current Game State] --> B[Pitcher generates pitch type];
     B --> C[Pitcher generates pitch characteristics];
     C --> D[Batter gets hit/strike/ball/foul/hit by pitch];
+```
 
 
 Project Organization
