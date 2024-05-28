@@ -36,10 +36,9 @@ game. The flow is as follows:
 
 ```mermaid
 flowchart TD
-    A[Current Game State] -->
-    B[Pitcher generates pitch type] -->
-    C[Pitcher generates pitch characteristics] -->
-    D[Batter gets hit/strike/ball/foul/hit by pitch];
+    A[Current Game State] --> B[Pitcher generates pitch type];
+    B --> C[Pitcher generates pitch characteristics];
+    C --> D[Batter gets hit/strike/ball/foul/hit by pitch];
 
 
 Project Organization
