@@ -6,9 +6,10 @@ from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.metrics import classification_report, log_loss
-from scipy.stats import chisquare
+from scipy.stats import chisquare, fisher_exact
+
 
 def categorical_model_pipeline(model, model_params, data, target_col,
                        split_data=False):
@@ -43,7 +44,7 @@ def categorical_model_pipeline(model, model_params, data, target_col,
     model.fit(X_train, y_train)
 
     if split_data:
-        return deepcopy(model), deepcopy(le), X_test, y_test
+        return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
 
     return deepcopy(model), deepcopy(le)
 
@@ -61,6 +62,8 @@ def sample_predictions(classifier, X):
     return sampled_predictions
 
 def categorical_chisquare(model, label_encoder, X_test, y_test):
+    """ Run a hypothesis test that generated data is similar in dist to actual
+    """
     sampled_preds = sample_predictions(model, X_test)
     pred_counts = pd.DataFrame(
             label_encoder.inverse_transform(sampled_preds)
@@ -68,9 +71,6 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
     actual_counts = pd.DataFrame(
             label_encoder.inverse_transform(y_test)
         ).value_counts()
-    
-    #print('\nAcutal, Pred:')
-    #print(actual_counts, pred_counts)
 
     pred_counts = pred_counts.reindex(actual_counts.index, fill_value=0)
     chi2_stat, p_value = chisquare(f_obs=actual_counts, f_exp=pred_counts)
@@ -90,6 +90,30 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
             "(fail to reject the null hypothesis)."
             )
 
+def categorical_fisher_exact(model, label_encoder, X_test, y_test):
+    """ Run a hypothesis test that generated data is similar in distribution to actual using Fisher's exact test """
+    sampled_preds = sample_predictions(model, X_test)
+    pred_counts = pd.DataFrame(label_encoder.inverse_transform(sampled_preds)).value_counts()
+    actual_counts = pd.DataFrame(label_encoder.inverse_transform(y_test)).value_counts()
+
+    pred_counts = pred_counts.reindex(actual_counts.index, fill_value=0)
+    
+    # Prepare the contingency table for Fisher's exact test
+    contingency_table = pd.concat([actual_counts, pred_counts], axis=1).fillna(0)
+    
+    # Perform Fisher's exact test
+    odds_ratio, p_value = fisher_exact(contingency_table)
+    
+    print("Odds ratio:", odds_ratio)
+    print("p-value:", p_value)
+    
+    # Interpretation of the result
+    if p_value < 0.05:
+        print("The distributions are significantly different (reject the null hypothesis).")
+    else:
+        print("The distributions are not significantly different (fail to reject the null hypothesis).")
+
+
 def classifier_report(model, label_encoder, X_test, y_test):
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)
@@ -98,8 +122,49 @@ def classifier_report(model, label_encoder, X_test, y_test):
                                 label_encoder.inverse_transform(y_pred)))
     print('Log Loss:', log_loss(y_test, y_prob))
 
-    for _ in range(10):
+    for _ in range(3):
         categorical_chisquare(model, label_encoder, X_test, y_test)
+        categorical_fisher_exact(model, label_encoder, X_test, y_test)
+
+def param_optim(model, X_train, X_test, y_train, y_test):
+
+    grouped_param_grid = [
+        {
+            'classifier__max_depth':[2, 3, 4, 5, 7],
+            'classifier__min_child_weight': [1, 3, 5, 7]
+        },
+        {
+            'classifier__subsample': [0.5, 0.7, 0.9, 1],
+            'classifier__colsample_bytree': [0.5, 0.7, 0.9, 1]
+        },
+        {
+            'classifier__learning_rate': [0.001, 0.01, 0.05, 0.1, 0.2],
+            'classifier__n_estimators': [50, 100, 150, 200]
+        }
+    ]
+
+    all_best_params = {}
+    for param_group in grouped_param_grid:
+        print(f'Cur param group: {list(param_group.keys())}')
+        best_loss = float('inf')
+        best_params = {}
+
+        for params in ParameterGrid(param_group):
+            #fit model with cur param group params and previous 
+            #param group params
+            model.set_params(**params, **all_best_params)
+            model.fit(X_train, y_train)
+
+            #find model with best log loss on test set
+            y_prob = model.predict_proba(X_test)
+            loss = log_loss(y_test, y_prob)
+            if loss < best_loss:
+                best_loss = loss
+                best_params = params
+        all_best_params = {**all_best_params, **best_params}
+
+    return all_best_params
+
 
 if __name__ == '__main__':
     vladdy = 665489
@@ -109,10 +174,9 @@ if __name__ == '__main__':
     showtime = 660271
     crowser = 681297
 
-    batter_id = vladdy
-
+    batter_id = crowser
     
-    params = {'n_estimators':25, 'eval_metric':'mlogloss'}
+    params = {'eval_metric':'mlogloss'}
     data = query_mlb_db(f'''
         select 
             case
@@ -140,12 +204,17 @@ if __name__ == '__main__':
                         ''')
     target_col = 'pitch_outcome'
 
-    model, le, X_test, y_test = categorical_model_pipeline(xgb.XGBClassifier,
-                                                           params,
-                                                           data, target_col,
-                                                           split_data=True
-                                     )
+    model, le, X_train, X_test, y_train, y_test = categorical_model_pipeline(
+            xgb.XGBClassifier,
+            params,
+            data,
+            target_col,
+            split_data=True
+        )
 
+    best_params = param_optim(model, X_train, X_test, y_train, y_test)
+    model.set_params(**best_params)
+    model.fit(X_train, y_train)
     classifier_report(model, le, X_test, y_test)
 
 
