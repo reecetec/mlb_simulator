@@ -4,6 +4,7 @@ MLB_StatsAPI==1.7.2
 numpy==1.26.4
 pandas==2.2.2
 pybaseball==2.2.7
+pytest==8.2.1
 python-dotenv==1.0.1
 Requests==2.32.2
 scikit_learn==1.5.0
