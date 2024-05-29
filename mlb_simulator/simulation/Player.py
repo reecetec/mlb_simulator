@@ -9,9 +9,14 @@ class Player:
         self.backtest_date = backtest_date
         self.get_player_info()
 
-    # if player defined using rotowire, get mapping to mlb id, etc.
+    # if player defined using rotowire, get mapping to mlb id, vice versa
     def get_player_info(self):
-        name_mapping_df = pd.read_csv(os.path.join(pathlib.Path.home(), 'sports', 'mlb_simulator', 'data', 'raw', 'name_map.csv'))
+        name_mapping_df = pd.read_csv(os.path.join(pathlib.Path.home(),
+                                                   'sports',
+                                                   'mlb_simulator',
+                                                   'data',
+                                                   'raw',
+                                                   'name_map.csv'))
         if self.mlb_id:
             name_mapping_df.set_index('MLBID', inplace=True)
             player = name_mapping_df.loc[[self.mlb_id]]
@@ -22,6 +27,7 @@ class Player:
             player = name_mapping_df.loc[[self.rotowire_id]]
             self.mlb_id = int(player['MLBID'].iloc[0])
 
+        # some players have multiple entries
         if len(player) > 0:
             self.name = player['PLAYERNAME'].iloc[0]
             self.team = player['TEAM'].iloc[0]
@@ -33,10 +39,13 @@ class Player:
             self.pos = player['POS']
 
     def print_info(self):
-        print(f'{self.name}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})')
+        print(f'{self.name}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {
+            self.rotowire_id})')
 
 if __name__ == '__main__':
-    players = [Player(mlb_id=665742), Player(rotowire_id=18749), Player(mlb_id=683003)]
+    players = [Player(mlb_id=665742),
+               Player(rotowire_id=18749),
+               Player(mlb_id=683003)]
 
     for player in players:
         player.print_info()

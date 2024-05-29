@@ -22,13 +22,11 @@ from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
 from data_utils import get_mlb_db_engine, query_mlb_db, get_db_location
 from data_utils import git_clone, git_pull
-import statsapi
-
 
 logger = logging.getLogger(__name__)
 
 DB_LOCATION = get_db_location()
-
+THIS_FILEPATH = pathlib.Path(__file__).parent.resolve()
 
 def validate_db_and_table(table_name):
     if not Path(DB_LOCATION).exists():
@@ -63,7 +61,9 @@ def update_statcast_table():
 
         #create table using schema from ./Statcast_create.sql
         try:
-            with open('./mlb_simulator/data/Statcast_create.sql', 'r') as f:
+            with open(
+                    THIS_FILEPATH / 'sql_scripts' / 'Statcast_create.sql',
+                    'r') as f:
                 statcast_create_script = f.read()
             scripts = statcast_create_script.split(';')
             with engine.connect() as connection:
@@ -140,7 +140,7 @@ def update_statcast_table():
 
         else:
             # query 2 days of previous keys to ensure no duplicates 
-            key_date = (max_date - timedelta(days=2)).strftime('%Y-%m-%d')
+            two_days_prior = (max_date - timedelta(days=2)).strftime('%Y-%m-%d')
             df = statcast(max_date.strftime('%Y-%m-%d'),
                           today.strftime('%Y-%m-%d'),
                           verbose=False)
@@ -153,7 +153,7 @@ def update_statcast_table():
                 cur_keys = pd.read_sql(
                         f'''select game_date, game_pk, at_bat_number,
                         pitch_number
-                        from Statcast where game_date > {key_date}''',
+                        from Statcast where game_date > {two_days_prior}''',
                         engine)
                 cur_keys['game_date'] = pd.to_datetime(cur_keys['game_date'])
                 merged = pd.merge(df,cur_keys,how='outer',indicator=True)
@@ -253,12 +253,10 @@ def update_chadwick_repo():
         repo_url = 'https://github.com/chadwickbureau/register.git'
         git_clone(repo_url, repo_save_path, logger)
 
-def update_player_name_map():
-    home_dir = pathlib.Path.home()
-    save_path = os.path.join(home_dir, 'sports', 'mlb_simulator',
-                             'data', 'raw', 'name_map.csv')
+def update_player_name_map(save_path):
 
     url = 'https://www.smartfantasybaseball.com/PLAYERIDMAPCSV'
+    #need this header or request is blocked
     headers = {
         'User-Agent': (
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -277,7 +275,7 @@ def update_player_name_map():
 
         # Save the content of the response (CSV file) to the specified path
         open(save_path, 'wb').write(res.content)
-        print(f"New file downloaded and saved to '{save_path}'")
+        print(f"Name map downloaded and saved to '{save_path}'")
     else:
         print(f"Failed to download CSV file. Status code: {res.status_code}")
 
@@ -325,6 +323,8 @@ def update_similar_sz_table():
 
 
 def update_sz_lookup():
+    """Get batter's strikezone for pitch generation.
+    """
 
     player_sz_data = query_mlb_db('''select batter, round(avg(sz_top),3)
                                     as sz_top, round(avg(sz_bot),3) as sz_bot
@@ -346,45 +346,102 @@ def update_sz_lookup():
 
 
 def update_venue_game_pk_mapping():
+
+    # get engine, check if table exists
+    engine, venue_table_exists = validate_db_and_table('VenueGamePkMapping')
+    
+    # if no data uploaded, get all data from 2018 to today in yr chunks
+    # (avoid memory overload)
+    if not venue_table_exists:
+        logger.info(
+                'Running creation/init upload for VenueGamePkMapping table')
+
+        #use init upload file: otherwise will take forever.
+        try:
+            init_upload_df = pd.read_csv(
+                    THIS_FILEPATH / 'init_uploads' / 'VenueMappingInit.csv')
+            init_upload_df.drop('Unnamed: 0', axis=1)
+            init_upload_df.to_sql('VenueGamePkMapping', engine,
+                                  if_exists='replace', index=False)
+            logger.info('Successful init upload')
+
+        except Exception as e:
+            logger.critical(
+                    ('Unable to create initial upload using '),
+                    ('./VenueMappingInit.csv')
+                    )
+            print(e)
+            exit()
+
+    # get missing game pks
     game_pks = query_mlb_db('select distinct game_pk from Statcast')
-    venue_game_pks = query_mlb_db('select distinct game_pk from VenueGamePkMapping')
-    missing_game_pks = game_pks[~game_pks['game_pk'].isin(venue_game_pks['game_pk'])]['game_pk'].to_list()
+    venue_game_pks = query_mlb_db(
+            'select distinct game_pk from VenueGamePkMapping')
+    if game_pks is None or venue_game_pks is None:
+        exit()
+
+    missing_game_pks = game_pks[
+            ~game_pks['game_pk'].isin(
+                venue_game_pks['game_pk'])]['game_pk'].to_list()
 
     if missing_game_pks:
         sleep_time = 1/10
         venue_data = []
         for game_pk in tqdm(missing_game_pks, total=len(missing_game_pks)):
-            res = requests.get(f'https://statsapi.mlb.com/api/v1/schedule?gamePk={game_pk}')
+            res = requests.get(
+                    f'https://statsapi.mlb.com/api/v1/schedule?gamePk={
+                        game_pk}')
             if res.status_code == 200:
                 game_json = res.json()
                 venue = game_json['dates'][0]['games'][0]['venue']
                 venue['game_pk'] = game_pk
                 venue_data.append(venue)
-                #dont get rate limited... apparently max is 25/sec, 10/sec to be on safe side
+                # dont get rate limited... apparently max is 25/sec,
+                # 10/sec to be on safe side
                 time.sleep(sleep_time)
         df = pd.DataFrame(venue_data)
-        upload_df = df.rename(columns={"name": "venue_name", "id": "venue_id"})[['game_pk','venue_name','venue_id']]
+        upload_df = df.rename(columns={
+            "name": "venue_name", "id": "venue_id"}
+                              )[['game_pk','venue_name','venue_id']]
         engine = get_mlb_db_engine()
-        upload_df.to_sql('VenueGamePkMapping', engine, if_exists='append', index=False)
+        upload_df.to_sql('VenueGamePkMapping', engine,
+                         if_exists='append', index=False)
 
-        logger.info(f'Successfully uploaded {len(upload_df)} rows to table VenueGamePkMapping')
+        logger.info(f'Successfully uploaded {
+            len(upload_df)} rows to table VenueGamePkMapping')
     else:
-        logger.info(f'Successfully uploaded {0} rows to table VenueGamePkMapping')
+        logger.info(f"No Missing VenueGamePkMapping's")
 
 def update_oaa():
     url = f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielding_Team&startYear=2021&endYear={datetime.now().year}&split=yes&team=&range=year&min=q&pos=of&roles=&viz=hide"
-    response = requests.get(url)
-    data = re.search(r"data = (.*);", response.text).group(1)
-    data = json.loads(data)
-    df = pd.DataFrame(data)
+    res = requests.get(url)
+    
+    if res.status_code != 200:
+        logger.critical('Error query statcast speed leaderboard')
+        exit()
+    
+    data = re.search(r"data = (.*);", res.text)
+    if data is not None:
+        data = data.group(1)
+        data = json.loads(data)
+        df = pd.DataFrame(data)
+    else:
+        logger.critical('Statcast oaa data not returned')
+        exit()
 
-    df = df[['year', 'entity_id', 'entity_name', 'outs_above_average_rhh', 'outs_above_average_lhh']].sort_values(by=['entity_id', 'year'])
+    df = df[['year', 'entity_id', 'entity_name', 'outs_above_average_rhh',
+             'outs_above_average_lhh']].sort_values(by=['entity_id', 'year'])
 
-    means = df.groupby('year')[['outs_above_average_rhh', 'outs_above_average_lhh']].mean()
-    stds = df.groupby('year')[['outs_above_average_rhh', 'outs_above_average_lhh']].std()
+    means = df.groupby('year')[
+            ['outs_above_average_rhh', 'outs_above_average_lhh']].mean()
+    stds = df.groupby('year')[
+            ['outs_above_average_rhh', 'outs_above_average_lhh']].std()
 
     for col in ('outs_above_average_rhh', 'outs_above_average_lhh'):
-        df[f'{col}_standardized'] = df.apply(lambda row: (row[col] - means.loc[row['year']][col]) / stds.loc[row['year']][col], axis=1)
+        df[f'{col}_standardized'] = df.apply(
+                lambda row: (
+                    row[col] - means.loc[row['year']][col]
+                    ) / stds.loc[row['year']][col], axis=1)
     
     column_renames = {
         'outs_above_average_rhh': 'oaa_rhh',
@@ -400,11 +457,20 @@ def update_oaa():
 
 def update_run_speed():
     url = f"https://baseballsavant.mlb.com/leaderboard/sprint_speed?min_season=2021&max_season={datetime.now().year}&position=&team=&min=5"
-    response = requests.get(url)
-    
-    data = re.search(r"data = (.*);", response.text).group(1)
-    data = json.loads(data)
-    df = pd.DataFrame(data)[['runner_id', 'r_sprint_speed_top50percent']]
+    res = requests.get(url)
+
+    if res.status_code != 200:
+        logger.critical('Error query statcast speed leaderboard')
+        exit()
+
+    data = re.search(r"data = (.*);", res.text)
+    if data:
+        data = data.group(1)
+        data = json.loads(data)
+        df = pd.DataFrame(data)[['runner_id', 'r_sprint_speed_top50percent']]
+    else:
+        logger.critical('Statcast speed data not returned')
+        exit()
 
     column_renames = {
         'runner_id': 'mlb_id',
@@ -428,25 +494,47 @@ def main():
         conn = sqlite3.connect(DB_LOCATION)
         conn.close()
 
+    # check if player_name_map exists
+    name_map_path = pathlib.Path(
+            DB_LOCATION).parent.parent / 'raw' / 'name_map.csv'
+    if not os.path.exists(name_map_path):
+        logger.info(
+                f'Creating raw data folder with player map at {name_map_path}')
+        os.makedirs(os.path.dirname(name_map_path), exist_ok=True)
+        update_player_name_map(name_map_path)
+
     #################### DAILY UPDATES #####################################
 
     # update tables
     logger.info(f'Updating Statcast')
     update_statcast_table()
 
-    logger.info(f'Updating BatterStrikezoneLookup')
-    update_sz_lookup()
+    logger.info(f'Updating VenueGamePkMapping')
+    update_venue_game_pk_mapping()
+
+    logger.info(f'Updating TeamOAA')
+    update_oaa()
+
+    logger.info(f'Updating PlayerSpeed')
+    update_run_speed()
 
     #################### MONTHLY UPDATES ###################################
     if datetime.now().day == 1:
+        logger.info('Running Monthly Updates. This will take a while')
+
         logger.info('Updating player name mapping')
-        update_player_name_map()
+        name_map_path = pathlib.Path(
+            DB_LOCATION).parent.parent / 'raw' / 'name_map.csv'
+        update_player_name_map(name_map_path)
 
         logger.info(
-                f'Updating BatterStrikePctByPitchType & BatterAvgWobaByPitchType'
+                ('Updating BatterStrikePctByPitchType & '),
+                 ('BatterAvgWobaByPitchType')
             )
         update_woba_strike_tables()
 
+        logger.info(f'Updating BatterStrikezoneLookup')
+        update_sz_lookup()
 
     #################### OUTDATED ##########################################
 
@@ -455,25 +543,10 @@ def main():
 
     #logger.info('Updating chadwick repo')
     #update_chadwick_repo()
-
-    #logger.info(f'Updating VenueGamePkMapping')
-    #update_venue_game_pk_mapping()
-
-    #logger.info(f'Updating TeamOAA')
-    #update_oaa()
-
-    #logger.info(f'Updating PlayerSpeed')
-    #update_run_speed()
         
     logger.info('DB creation/updates complete')
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    #load_dotenv(find_dotenv())
-
     main()
-
-

@@ -45,11 +45,10 @@ class Pitcher(Player):
         self.throws = query_mlb_db(f'''select p_throws from Statcast where 
                                    pitcher={self.mlb_id} and p_throws 
                                    is not null limit 1''')['p_throws'][0]
-        #self.throws = 1 if self.throws=='R' else 0
         self.cumulative_pitch_number = 0
         self.prev_pitch = None
 
-        #fit models...
+        #fit models
         self.pitch_characteristic_generators = {'L':{},
                                                 'R':{} }
         self.fit_pitch_sequencer()
@@ -81,7 +80,8 @@ class Pitcher(Player):
                                         default_distribution='gaussian_kde',
                                         )
                 synthesizer.fit(df)
-                self.pitch_characteristic_generators[batter_stands][pitch_type] = deepcopy(synthesizer)
+                self.pitch_characteristic_generators[
+                        batter_stands][pitch_type] = deepcopy(synthesizer)
 
     def fit_pitch_sequencer(self):
         X, y, encoders, pitch_arsenal = (
