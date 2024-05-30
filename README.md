@@ -25,8 +25,7 @@ make data
 ```
 * Note: This downloads Statcast data from 2018. It will take a while.
 * Sometimes pybaseball will run into an error, if so, rerun above command to continue setup
-* By default, the database will be located at ~/sports/mlb_simulator/data/databases/mlb.db. 
-* If you wish to change this, modify the path in mlb_simulator/data/data_utils.py
+* The database will be located at ~/sports/mlb_simulator/data/databases/mlb.db. 
 
 Once the database has been set up:
 
