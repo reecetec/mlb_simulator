@@ -4,12 +4,17 @@ MLB Game Simulator
 Simulate MLB matchup results
 
 Todo:
- - Remove need for SDV (super slow)
- - Improve Batter strike/ball/hit etc. model, maybe use less features
- - Use Copulas for pitch generation
- - Fix game state transition probabilities edge cases
+ - Remove need for SDV in pitch characteristic generation (extreme performance bottleneck)
+     - conditional copulas?  
+ - Remove a lot of code from the simulation classes pertaining to model fitting and prediction, move these to /mlb_simulator/models
+ - Fix game state transition probabilities edge cases and add script to update this monthly
  - Implement simulation logic from notebook 7.0 in simulation class
- - Fix messy imports 
+ - Fix messy imports
+ - Make use of special methods such as implementing __getitem__ to return a batter for a team
+ - refactor all classes
+ - add logic to track simulation box scores
+ - build dashboard to display games being played today, and allow user to run simulation for a desired game from the dash (and view results, box score)
+     - try creating custom react component to display each game in desired format
 
 ## Getting Started
 
