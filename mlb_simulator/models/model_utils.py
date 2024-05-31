@@ -109,29 +109,6 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
             )
     print(pd.DataFrame(hyp_tests, columns=['test_results']).value_counts())
 
-def categorical_fisher_exact(model, label_encoder, X_test, y_test):
-    """ Run a hypothesis test that generated data is similar in distribution to actual using Fisher's exact test """
-    sampled_preds = sample_predictions(model, X_test)
-    pred_counts = pd.DataFrame(label_encoder.inverse_transform(sampled_preds)).value_counts()
-    actual_counts = pd.DataFrame(label_encoder.inverse_transform(y_test)).value_counts()
-
-    pred_counts = pred_counts.reindex(actual_counts.index, fill_value=0)
-    
-    # Prepare the contingency table for Fisher's exact test
-    contingency_table = pd.concat([actual_counts, pred_counts], axis=1).fillna(0)
-    
-    # Perform Fisher's exact test
-    odds_ratio, p_value = fisher_exact(contingency_table)
-    
-    print("Odds ratio:", odds_ratio)
-    print("p-value:", p_value)
-    
-    # Interpretation of the result
-    if p_value < 0.05:
-        print("The distributions are significantly different (reject the null hypothesis).")
-    else:
-        print("The distributions are not significantly different (fail to reject the null hypothesis).")
-
 
 def classifier_report(model, label_encoder, X_test, y_test):
     y_pred = model.predict(X_test)
@@ -242,6 +219,8 @@ if __name__ == '__main__':
         order by game_date asc, at_bat_number asc, pitch_number asc;
                         ''')
     data = data.tail(8000)
+    print(data.columns)
+    exit()
 
 
     target_col = 'pitch_outcome'

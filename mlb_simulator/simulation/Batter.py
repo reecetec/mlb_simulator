@@ -6,7 +6,7 @@ sys.path.append(parent_dir)
 
 from simulation.Player import Player
 
-from data.data_utils import query_mlb_db
+from mlb_simulator.data.data_utils import query_mlb_db
 from features.build_features import get_pitch_outcome_dataset_xgb, get_hit_outcome_dataset
 
 import xgboost as xgb
@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 import logging
 from copy import deepcopy
-from data.data_utils import compute_cat_loglik, compute_xgboost_loglik
+from mlb_simulator.models.model_utils import compute_cat_loglik, compute_model_loglik
 
 from scipy.stats import norm, gaussian_kde
 from scipy.interpolate import interp1d    

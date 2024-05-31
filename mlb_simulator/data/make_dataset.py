@@ -20,8 +20,8 @@ from pybaseball import statcast
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
-from data_utils import get_mlb_db_engine, query_mlb_db, get_db_location
-from data_utils import git_clone, git_pull
+from mlb_simulator.data.data_utils import get_mlb_db_engine, query_mlb_db
+from mlb_simulator.data.data_utils import get_db_location, git_clone, git_pull
 
 logger = logging.getLogger(__name__)
 

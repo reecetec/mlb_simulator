@@ -1,5 +1,6 @@
 '''
-To generate the characteristics of a given pitch type. For example, generate the features of a fastball. 
+To generate the characteristics of a given pitch type. For example,
+generate the features of a fastball. 
 '''
 
 #get query mlb db path..

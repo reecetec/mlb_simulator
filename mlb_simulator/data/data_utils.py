@@ -2,66 +2,87 @@
 import pathlib
 from sqlalchemy import create_engine, engine 
 import pandas as pd
-import numpy as np
 import os
 import pathlib
 import subprocess
 
-def get_db_location():
-    """gets path for database 
+def get_db_location() -> str:
+    """Gets path for mlb.db database 
+
+    Default location is set to ~/sports/mlb_simulator/data/databases/mlb.db
 
     Returns:
-        str, str: db, table schema paths
+        str: db path
     """
+
     home_dir = pathlib.Path.home()
-    DB_PATH = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
+    db_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
                            'databases', 'mlb.db')
-    return DB_PATH 
+    return db_path 
 
-def get_mlb_db_engine() -> engine.Engine | None:
-    """Get an engine for the database. Can be used to run an upload script, etc.
+def get_mlb_db_engine() -> engine.Engine:
+    """Get a sqlalchemy engine for the mlb.db 
 
     Returns:
-        engine: sql engine
+        engine: sqlalchemy engine connected to the master db
     """
+
     try:
         db_path = get_db_location()
         engine = create_engine(f'sqlite:///{db_path}', echo=False)
-        return engine
     except Exception as e:
         print(f'Error creating engine: {e}')
-        return None
+        raise
+    return engine
 
-def query_mlb_db(query_str) -> pd.DataFrame | None:
+def query_mlb_db(query_str) -> pd.DataFrame:
     """Function to query the mlb database
+
+    Using get_mlb_db_engine(), obtains an engine 
 
     Args:
         query_str (str): the query to send to the mlb database
 
     Returns:
-        pd.DataFrame: dataframe of query, or None if error
+        pd.DataFrame: dataframe of query
     """
+
     try:
         engine = get_mlb_db_engine()
         df = pd.read_sql(query_str, engine)
-        return df
     except Exception as e:
         print(f"Error executing query: {e}")
-        return None
+        raise
+    return df
 
-def git_pull(repo_path, logger):
+def git_pull(repo_path) -> None:
+    """Function to pull a git repo
+
+    Args:
+        repo_path (str): The path to the local git repo you wish to pull
+    """
+
     try:
         subprocess.run(['git', 'pull'], cwd=repo_path, check=True)
-        logger.info("Repository successfully pulled")
+        print(f"{repo_path} sucessfully pulled")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error pulling repository: {e}")
+        print(f"Error pulling repository: {e}")
+        raise
 
-def git_clone(repo_url, save_path, logger):
+def git_clone(repo_url, save_path):
+    """Function to clone a git repo
+
+    Args:
+        repo_url (str): The url to the git repo you wish to pull
+        save_path (str): The path you wish to save the pulled repo to
+    """
+
     try:
         subprocess.run(['git', 'clone', repo_url, save_path], check=True)
-        logger.info("Repository successfully cloned")
+        print(f"{repo_url} successfully cloned to {save_path}")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error cloning repository: {e}")
+        print(f"Error cloning repository: {e}")
+        raise
 
 
 
