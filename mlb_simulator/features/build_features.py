@@ -1,40 +1,78 @@
-#using functions from data utils, constructs a featureset for a model
-#from src.data.data_utils import query_mlb_db
-#from src.features.sql_dataset_loader import SQLiteDataset
-
-import sys
-import os
-import pathlib
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
-from data.data_utils import query_mlb_db
-from features.sql_dataset_loader import SQLiteDataset
-from torch.utils.data import DataLoader
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-from copy import deepcopy
-import logging
-import torch
+from mlb_simulator.data.data_utils import query_mlb_db
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-
-PITCH_CHARACTERISITCS = [
-    'release_speed', 'release_spin_rate', 'release_extension',
-    'release_pos_x', 'release_pos_y', 'release_pos_z',
-    'spin_axis', 'pfx_x', 'pfx_z',
-    'vx0', 'vy0', 'vz0',
-    'ax', 'ay', 'az',
-    'plate_x', 'plate_z'
+# pitch characteristics to be generated/put into pitch outcome model
+_pitch_characteristics = [
+    'release_speed', 'release_spin_rate',
+    'plate_x', 'plate_z',
 ]
+_pitch_outcome_game_state_features = 'p_throws strikes balls'.split()
 
+PITCH_OUTCOME_FEATURES = _pitch_characteristics + \
+                         _pitch_outcome_game_state_features
+
+
+def get_pitch_outcome_data(batter_id, backtest_date=None) -> pd.DataFrame:
+    f"""Function to get training data for a batter's pitch outcome model
+
+    For a given player, returns the model features for the pitch outcome model 
+    {PITCH_OUTCOME_FEATURES} and the pitch_outcome (the target for this model).
+    If a backtest date is supplied, will only return data before the backtest
+    date.
+
+    Args:
+        batter_id (int): the batter's mlb id
+        backtest_date (str): get data up to backtest_date (default None)
+
+    Returns:
+        pd.DataFrame: a dataframe containing the query results
+
+    Example:
+        >>> df = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
+        >>> df.head()
+    """
+
+    # format input backtest date as query
+    if backtest_date is not None:
+        backtest_date = f"and game_date <= date('{backtest_date}')"
+    else:
+        backtest_date = ''
+
+    query_str = f"""
+        select 
+            case
+                when description='swinging_strike' or
+                     description='swinging_strike_blocked' or
+                     description='called_strike' or description='foul_tip' or
+                     description='swinging_pitchout'
+                then 'strike'
+                when description='foul' or
+                     description='foul_pitchout' 
+                then 'foul'
+                when description='ball' or
+                     description='blocked_ball' or
+                     description='pitchout' 
+                then 'ball'
+                when description='hit_by_pitch' then 'hit_by_pitch'
+                when description='hit_into_play' then 'hit_into_play'
+                else NULL
+            end as pitch_outcome,
+            {', '.join(PITCH_OUTCOME_FEATURES)}
+        from Statcast
+        where batter={batter_id}
+        and {' & '.join(PITCH_OUTCOME_FEATURES)} 
+        is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    """
+
+    df = query_mlb_db(query_str)
+
+    return df
+
+
+
+#=============================================================================
 def get_xgb_set(df, target_col, split=False, test_size=0.1):
     encoders = {} # to store encoders
 
@@ -625,10 +663,18 @@ if __name__ == '__main__':
         #print(f'label encoder: {label_encoders}')
         #print(f'training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}')
        #break
-    kukuchi = 579328
-    jones = 683003
+    #kukuchi = 579328
+    #jones = 683003
 
-    pitcher = kukuchi
+    #pitcher = kukuchi
 
-    all_pitches = get_pitches(pitcher,'L','CU')
-    print(all_pitches.head())
+    #all_pitches = get_pitches(pitcher,'L','CU')
+    #print(all_pitches.head())
+
+    df = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
+    print(df.head())
+
+
+
+
+

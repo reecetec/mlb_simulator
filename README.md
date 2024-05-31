@@ -4,6 +4,7 @@ MLB Game Simulator
 Simulate MLB matchup results
 
 Todo:
+ - create github workflow to automatically generate docs: https://pdoc.dev/docs/pdoc.html
  - Remove need for SDV in pitch characteristic generation (extreme performance bottleneck)
      - conditional copulas?  
  - Remove a lot of code from the simulation classes pertaining to model fitting and prediction, move these to /mlb_simulator/models
