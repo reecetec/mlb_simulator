@@ -12,43 +12,50 @@ from scipy.stats import chisquare
 from datetime import datetime, timedelta
 
 
+def save_hyperparams(model_name, player_id, hyperparams: dict):
+    """Save hyperparams to correct folder
+    """
+
+    model_folder = os.path.join(get_models_location(), model_name)
+
+
 def check_for_hyperparams(model_name, player_id):
     """Check to see if up to date hyperparams exist for desired model/player
 
     """
-
     model_folder = os.path.join(get_models_location(), model_name)
     saved_params = os.listdir(model_folder)
 
     for file in saved_params:
-        parts = file.split('-')
-        mlb_id, rest = parts
 
-        # if mlb id found, check if model hyperparams tuned within 90 days
-        if mlb_id == str(player_id):
-            date_part = rest.replace('.json', '')
-            date_created = datetime.strptime(date_part, '%Y%m%d')
-            if datetime.now() - date_created > timedelta(days=90):
-                return False
-            else:
-                return os.path.join(model_folder, file)
+        try:
+            parts = file.split('-')
+            mlb_id, rest = parts
+
+            # if mlb id found, check if model hyperparams tuned within 90 days
+            if mlb_id == str(player_id):
+                date_part = rest.replace('.json', '')
+                date_created = datetime.strptime(date_part, '%Y%m%d')
+                if datetime.now() - date_created > timedelta(days=90):
+                    return False
+                else:
+                    return os.path.join(model_folder, file)
+        except Exception as e:
+            print(
+                (f'Found invalid file format in {model_folder}: {e} \n\n'),
+                (f'Files in { model_folder
+                    } should be of format: mlbid-%Y%m%d.json \n\n')
+            )
+            raise
 
     return False
 
-def categorical_model_pipeline(model, model_params, data, target_col,
-                               split_data=False):
-    #encode target col
+def categorical_model_pipeline(model, data, target_col):
+
+    #encode target col & split into X, y
     le = LabelEncoder()
     features = data.drop(columns=[target_col])
     target = le.fit_transform(data[target_col])
-
-    # if not splitting data, train model on the entire input set.
-    X_test, y_test = None, None
-    if split_data:
-        X_train, X_test, y_train, y_test = train_test_split(
-                features, target, test_size=0.05, shuffle=False)
-    else:
-        X_train, y_train = features, target
 
     numeric_features = features.select_dtypes(include=['float64', 'int64']).columns
     categorical_features = features.select_dtypes(include=['object']).columns
@@ -60,16 +67,16 @@ def categorical_model_pipeline(model, model_params, data, target_col,
 
     model = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('classifier', model(**model_params))
+        ('classifier', model())
     ])
 
     # train the model
-    model.fit(X_train, y_train)
+    #model.fit(X_train, y_train)
 
-    if split_data:
-        return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
+    #if split_data:
+    #    return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
 
-    return deepcopy(model), deepcopy(le)
+    return deepcopy(model), deepcopy(le), features, target
 
 
 def sample_predictions(classifier, X):
@@ -143,7 +150,10 @@ def classifier_report(model, label_encoder, X_test, y_test):
 
     categorical_chisquare(model, label_encoder, X_test, y_test)
 
-def param_optimizer(model, X_train, X_test, y_train, y_test):
+def xgb_hyperparam_optimizer(model, X, y):
+
+    X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.20, shuffle=False)
 
     grouped_param_grid = [
         {
@@ -160,16 +170,16 @@ def param_optimizer(model, X_train, X_test, y_train, y_test):
         }
     ]
 
-    all_best_params = {}
+    # use mlogloss always
+    all_best_params = {'classifier__eval_metric':'mlogloss'}
     for param_group in grouped_param_grid:
-        print(f'Cur param group: {list(param_group.keys())}')
         best_loss = float('inf')
         best_params = {}
 
         for params in ParameterGrid(param_group):
             #fit model with cur param group params and previous 
             #param group params
-            model.set_params(**params, **all_best_params)
+            model.set_params(**all_best_params, **params)
             model.fit(X_train, y_train)
 
             #find model with best log loss on test set
