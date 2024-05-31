@@ -20,6 +20,18 @@ def get_db_location() -> str:
                            'databases', 'mlb.db')
     return db_path 
 
+def get_models_location() -> str:
+    """Gets path for models folder
+
+    Returns:
+        str: path to models folder
+    """
+
+    home_dir = pathlib.Path.home()
+    path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'models')
+
+    return path
+
 def get_mlb_db_engine() -> engine.Engine:
     """Get a sqlalchemy engine for the mlb.db 
 

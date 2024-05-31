@@ -10,9 +10,11 @@ _pitch_outcome_game_state_features = 'p_throws strikes balls'.split()
 
 PITCH_OUTCOME_FEATURES = _pitch_characteristics + \
                          _pitch_outcome_game_state_features
+PITCH_OUTCOME_TARGET_COL = 'pitch_outcome'
 
 
-def get_pitch_outcome_data(batter_id, backtest_date=None) -> pd.DataFrame:
+def get_pitch_outcome_data(batter_id: int,
+                           backtest_date=None) -> tuple[pd.DataFrame, str]:
     f"""Function to get training data for a batter's pitch outcome model
 
     For a given player, returns the model features for the pitch outcome model 
@@ -25,7 +27,9 @@ def get_pitch_outcome_data(batter_id, backtest_date=None) -> pd.DataFrame:
         backtest_date (str): get data up to backtest_date (default None)
 
     Returns:
-        pd.DataFrame: a dataframe containing the query results
+        tuple: A tuple containing:
+            - pd.DataFrame: a dataframe containing the query results
+            - str: the name of the target col for this model
 
     Example:
         >>> df = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
@@ -56,7 +60,7 @@ def get_pitch_outcome_data(batter_id, backtest_date=None) -> pd.DataFrame:
                 when description='hit_by_pitch' then 'hit_by_pitch'
                 when description='hit_into_play' then 'hit_into_play'
                 else NULL
-            end as pitch_outcome,
+            end as {PITCH_OUTCOME_TARGET_COL},
             {', '.join(PITCH_OUTCOME_FEATURES)}
         from Statcast
         where batter={batter_id}
@@ -68,8 +72,7 @@ def get_pitch_outcome_data(batter_id, backtest_date=None) -> pd.DataFrame:
 
     df = query_mlb_db(query_str)
 
-    return df
-
+    return df, PITCH_OUTCOME_TARGET_COL
 
 
 #=============================================================================
@@ -671,7 +674,8 @@ if __name__ == '__main__':
     #all_pitches = get_pitches(pitcher,'L','CU')
     #print(all_pitches.head())
 
-    df = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
+    df, target_col = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
+    print(target_col)
     print(df.head())
 
 

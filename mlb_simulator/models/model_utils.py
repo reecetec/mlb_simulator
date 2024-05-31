@@ -1,19 +1,42 @@
 import numpy as np
 import pandas as pd
-from mlb_simulator.data.data_utils import query_mlb_db
-import xgboost as xgb
+import os
+from mlb_simulator.data.data_utils import get_models_location
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.metrics import classification_report, log_loss
-from scipy.stats import chisquare, fisher_exact
+from scipy.stats import chisquare 
+from datetime import datetime, timedelta
 
+
+def check_for_hyperparams(model_name, player_id):
+    """Check to see if up to date hyperparams exist for desired model/player
+
+    """
+
+    model_folder = os.path.join(get_models_location(), model_name)
+    saved_params = os.listdir(model_folder)
+
+    for file in saved_params:
+        parts = file.split('-')
+        mlb_id, rest = parts
+
+        # if mlb id found, check if model hyperparams tuned within 90 days
+        if mlb_id == str(player_id):
+            date_part = rest.replace('.json', '')
+            date_created = datetime.strptime(date_part, '%Y%m%d')
+            if datetime.now() - date_created > timedelta(days=90):
+                return False
+            else:
+                return os.path.join(model_folder, file)
+
+    return False
 
 def categorical_model_pipeline(model, model_params, data, target_col,
-                       split_data=False):
-
+                               split_data=False):
     #encode target col
     le = LabelEncoder()
     features = data.drop(columns=[target_col])
@@ -40,7 +63,7 @@ def categorical_model_pipeline(model, model_params, data, target_col,
         ('classifier', model(**model_params))
     ])
 
-    # Train the model
+    # train the model
     model.fit(X_train, y_train)
 
     if split_data:
@@ -120,7 +143,7 @@ def classifier_report(model, label_encoder, X_test, y_test):
 
     categorical_chisquare(model, label_encoder, X_test, y_test)
 
-def param_optim(model, X_train, X_test, y_train, y_test):
+def param_optimizer(model, X_train, X_test, y_train, y_test):
 
     grouped_param_grid = [
         {
@@ -181,61 +204,61 @@ if __name__ == '__main__':
     showtime = 660271
     crowser = 681297
 
-    batter_id = vladdy
+    batter_id = soto
+
+    check_for_hyperparams('pitch_outcome', batter_id)
     
-    params = {'eval_metric':'mlogloss'}
-    data = query_mlb_db(f'''
-        select 
-            case
-                when description='swinging_strike' 
-                        or description='swinging_strike_blocked' 
-                        or description='called_strike' 
-                        or description='foul_tip' 
-                        or description='swinging_pitchout'
-                    then 'strike'
-                when description='foul'
-                        or description='foul_pitchout'
-                    then 'foul'
-                when description='ball'
-                        or description='blocked_ball'
-                        or description='pitchout'
-                    then 'ball'
-                /* when description='hit_by_pitch' then 'hit_by_pitch' */
-                when description='hit_into_play' then 'hit_into_play'
-                else NULL
-            end as pitch_outcome,
-            p_throws,
-            pitch_number, strikes, balls,
-            release_speed, 
-            release_spin_rate, 
-            plate_x, plate_z
-        from Statcast
-        where batter={batter_id}
-        and pitch_outcome & p_throws & pitch_number & strikes & balls &
-            release_speed &
-            release_spin_rate &
-            plate_x & plate_z
-        is not null
-        order by game_date asc, at_bat_number asc, pitch_number asc;
-                        ''')
-    data = data.tail(8000)
-    print(data.columns)
-    exit()
+    #params = {'eval_metric':'mlogloss'}
+    #data = query_mlb_db(f'''
+    #    select 
+    #        case
+    #            when description='swinging_strike' 
+    #                    or description='swinging_strike_blocked' 
+    #                    or description='called_strike' 
+    #                    or description='foul_tip' 
+    #                    or description='swinging_pitchout'
+    #                then 'strike'
+    #            when description='foul'
+    #                    or description='foul_pitchout'
+    #                then 'foul'
+    #            when description='ball'
+    #                    or description='blocked_ball'
+    #                    or description='pitchout'
+    #                then 'ball'
+    #            /* when description='hit_by_pitch' then 'hit_by_pitch' */
+    #            when description='hit_into_play' then 'hit_into_play'
+    #            else NULL
+    #        end as pitch_outcome,
+    #        p_throws,
+    #        pitch_number, strikes, balls,
+    #        release_speed, 
+    #        release_spin_rate, 
+    #        plate_x, plate_z
+    #    from Statcast
+    #    where batter={batter_id}
+    #    and pitch_outcome & p_throws & pitch_number & strikes & balls &
+    #        release_speed &
+    #        release_spin_rate &
+    #        plate_x & plate_z
+    #    is not null
+    #    order by game_date asc, at_bat_number asc, pitch_number asc;
+    #                    ''')
+    #data = data.tail(8000)
+    #print(data.columns)
 
+    #target_col = 'pitch_outcome'
 
-    target_col = 'pitch_outcome'
+    #model, le, X_train, X_test, y_train, y_test = categorical_model_pipeline(
+    #        xgb.XGBClassifier,
+    #        params,
+    #        data,
+    #        target_col,
+    #        split_data=True
+    #    )
 
-    model, le, X_train, X_test, y_train, y_test = categorical_model_pipeline(
-            xgb.XGBClassifier,
-            params,
-            data,
-            target_col,
-            split_data=True
-        )
-
-    best_params = param_optim(model, X_train, X_test, y_train, y_test)
-    model.set_params(**best_params)
-    model.fit(X_train, y_train)
-    classifier_report(model, le, X_test, y_test)
+    #best_params = param_optim(model, X_train, X_test, y_train, y_test)
+    #model.set_params(**best_params)
+    #model.fit(X_train, y_train)
+    #classifier_report(model, le, X_test, y_test)
 
 
