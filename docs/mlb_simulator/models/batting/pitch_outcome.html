@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>mlb_simulator.models.batting.pitch_outcome API documentation</title>
-<meta name="description" content="this model determines the pitch outcome, meaning was the ball hit,
-strike, ball, foul, or hit into play?" />
+<meta name="description" content="Module for the pitch outcome model. This model determines the pitch outcome,
+meaning it answers the following question: was the ball hit, was there a
+…" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -23,24 +24,99 @@ strike, ball, foul, or hit into play?" />
 <h1 class="title">Module <code>mlb_simulator.models.batting.pitch_outcome</code></h1>
 </header>
 <section id="section-intro">
-<p>this model determines the pitch outcome, meaning was the ball hit,
-strike, ball, foul, or hit into play?</p>
+<p>Module for the pitch outcome model. This model determines the pitch outcome,
+meaning it answers the following question: was the ball hit, was there a
+strike, ball, foul?</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34; 
-this model determines the pitch outcome, meaning was the ball hit,
-strike, ball, foul, or hit into play?
+Module for the pitch outcome model. This model determines the pitch outcome,
+meaning it answers the following question: was the ball hit, was there a
+strike, ball, foul?
 &#34;&#34;&#34;
-from mlb_simulator.data.data_utils import query_mlb_db
+
 from mlb_simulator.models import model_utils as mu
+from mlb_simulator.features.build_features import get_pitch_outcome_data
 
-pitch_outcome_query = lambda batter: f&#34;&#34;&#34;
-{batter}
-&#34;&#34;&#34;
+import json
+import xgboost as xgb
+import logging
 
-print(pitch_outcome_query(123))</code></pre>
+logger = logging.getLogger(__name__)
+log_fmt = &#39;%(asctime)s - %(name)s - %(levelname)s - %(message)s&#39;
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+
+MODEL_NAME = &#39;pitch_outcome&#39;
+
+def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
+    &#34;&#34;&#34;Fit pitch outcome model for a given batter id
+    
+    This function will obtain the data required to fit the model, check if 
+    hyperparameters have previously been optimized for the given batter id. 
+    If so, load them, otherwise, fit them and save them. Once ideal hyperparams
+    have been fit, fit the model to the dataset.
+
+    Parameters:
+        batter_id (int): the desired batter&#39;s mlb id
+        backtest_date (str, optional): the date to be used if backtesting
+    &#34;&#34;&#34;
+
+    #get the dataset and target col
+    dataset, target_col = get_pitch_outcome_data(batter_id,
+                                                 backtest_date=backtest_date)
+
+    # get model pipeline 
+    model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
+                                          dataset,
+                                          target_col
+                                          )
+
+    # check if up to date hyperparams have been fit for this batter
+    hyperparam_path = mu.check_for_hyperparams(&#39;pitch_outcome&#39;, batter_id)
+
+    # if valid hyperparams, load them
+    if hyperparam_path:
+        with open(hyperparam_path) as f:
+            hyperparams = json.load(f)
+
+    # if no valid hyperparams, fit new ones and save them
+    else:
+        logger.info(
+            f&#39;No hyperparams found for {batter_id}, {MODEL_NAME}:\n&#39; + \
+            &#39;finding and saving optimal hyperparams...&#39;
+        )
+        hyperparams = mu.xgb_hyperparam_optimizer(model, X, y)
+        mu.save_hyperparams(MODEL_NAME, batter_id, hyperparams)
+        
+
+    # fit model for use
+    model.set_params(**hyperparams)
+    model.fit(X, y)
+
+    # return feature ordering
+    feature_order = X.columns
+
+    return model, le, feature_order
+
+
+    
+def main():
+
+    vladdy = 665489
+    soto = 665742
+    schneider = 676914
+    biggio = 624415
+    showtime = 660271
+    crowser = 681297
+
+    batter_id = soto
+    model, le, feature_input_order = fit_pitch_outcome_model(batter_id)
+    print(model, le, feature_input_order)
+
+if __name__ == &#34;__main__&#34;:
+    main()</code></pre>
 </details>
 </section>
 <section>
@@ -50,8 +126,75 @@ print(pitch_outcome_query(123))</code></pre>
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="mlb_simulator.models.batting.pitch_outcome.pitch_outcome_query"><code class="name flex">
-<span>def <span class="ident">pitch_outcome_query</span></span>(<span>batter)</span>
+<dt id="mlb_simulator.models.batting.pitch_outcome.fit_pitch_outcome_model"><code class="name flex">
+<span>def <span class="ident">fit_pitch_outcome_model</span></span>(<span>batter_id: int, backtest_date=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fit pitch outcome model for a given batter id</p>
+<p>This function will obtain the data required to fit the model, check if
+hyperparameters have previously been optimized for the given batter id.
+If so, load them, otherwise, fit them and save them. Once ideal hyperparams
+have been fit, fit the model to the dataset.</p>
+<h2 id="parameters">Parameters</h2>
+<p>batter_id (int): the desired batter's mlb id
+backtest_date (str, optional): the date to be used if backtesting</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
+    &#34;&#34;&#34;Fit pitch outcome model for a given batter id
+    
+    This function will obtain the data required to fit the model, check if 
+    hyperparameters have previously been optimized for the given batter id. 
+    If so, load them, otherwise, fit them and save them. Once ideal hyperparams
+    have been fit, fit the model to the dataset.
+
+    Parameters:
+        batter_id (int): the desired batter&#39;s mlb id
+        backtest_date (str, optional): the date to be used if backtesting
+    &#34;&#34;&#34;
+
+    #get the dataset and target col
+    dataset, target_col = get_pitch_outcome_data(batter_id,
+                                                 backtest_date=backtest_date)
+
+    # get model pipeline 
+    model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
+                                          dataset,
+                                          target_col
+                                          )
+
+    # check if up to date hyperparams have been fit for this batter
+    hyperparam_path = mu.check_for_hyperparams(&#39;pitch_outcome&#39;, batter_id)
+
+    # if valid hyperparams, load them
+    if hyperparam_path:
+        with open(hyperparam_path) as f:
+            hyperparams = json.load(f)
+
+    # if no valid hyperparams, fit new ones and save them
+    else:
+        logger.info(
+            f&#39;No hyperparams found for {batter_id}, {MODEL_NAME}:\n&#39; + \
+            &#39;finding and saving optimal hyperparams...&#39;
+        )
+        hyperparams = mu.xgb_hyperparam_optimizer(model, X, y)
+        mu.save_hyperparams(MODEL_NAME, batter_id, hyperparams)
+        
+
+    # fit model for use
+    model.set_params(**hyperparams)
+    model.fit(X, y)
+
+    # return feature ordering
+    feature_order = X.columns
+
+    return model, le, feature_order</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.models.batting.pitch_outcome.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -59,9 +202,18 @@ print(pitch_outcome_query(123))</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">pitch_outcome_query = lambda batter: f&#34;&#34;&#34;
-{batter}
-&#34;&#34;&#34;</code></pre>
+<pre><code class="python">def main():
+
+    vladdy = 665489
+    soto = 665742
+    schneider = 676914
+    biggio = 624415
+    showtime = 660271
+    crowser = 681297
+
+    batter_id = soto
+    model, le, feature_input_order = fit_pitch_outcome_model(batter_id)
+    print(model, le, feature_input_order)</code></pre>
 </details>
 </dd>
 </dl>
@@ -82,7 +234,8 @@ print(pitch_outcome_query(123))</code></pre>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="mlb_simulator.models.batting.pitch_outcome.pitch_outcome_query" href="#mlb_simulator.models.batting.pitch_outcome.pitch_outcome_query">pitch_outcome_query</a></code></li>
+<li><code><a title="mlb_simulator.models.batting.pitch_outcome.fit_pitch_outcome_model" href="#mlb_simulator.models.batting.pitch_outcome.fit_pitch_outcome_model">fit_pitch_outcome_model</a></code></li>
+<li><code><a title="mlb_simulator.models.batting.pitch_outcome.main" href="#mlb_simulator.models.batting.pitch_outcome.main">main</a></code></li>
 </ul>
 </li>
 </ul>

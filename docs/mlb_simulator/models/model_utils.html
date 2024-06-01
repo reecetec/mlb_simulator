@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>mlb_simulator.models.model_utils API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="This module includes functions to help with fitting models, saving models/
+model hyperparams, and evaluating models" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,41 +23,131 @@
 <h1 class="title">Module <code>mlb_simulator.models.model_utils</code></h1>
 </header>
 <section id="section-intro">
+<p>This module includes functions to help with fitting models, saving models/
+model hyperparams, and evaluating models</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import numpy as np
+<pre><code class="python">&#34;&#34;&#34;
+This module includes functions to help with fitting models, saving models/
+model hyperparams, and evaluating models
+&#34;&#34;&#34;
+
+from mlb_simulator.data.data_utils import get_models_location
+
+import os
+import json
+import numpy as np
 import pandas as pd
-from mlb_simulator.data.data_utils import query_mlb_db
-import xgboost as xgb
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.metrics import classification_report, log_loss
-from scipy.stats import chisquare, fisher_exact
+from scipy.stats import chisquare 
+from datetime import datetime, timedelta
 
 
-def categorical_model_pipeline(model, model_params, data, target_col,
-                       split_data=False):
+def save_hyperparams(model_name, player_id, hyperparams: dict):
+    &#34;&#34;&#34;Save hyperparams to a json file
 
-    #encode target col
+    Parameters:
+        model_name (str): the name of the model being saved. Crutial to ensure 
+        model gets saved to correct path
+        player_id (int): the mlbid of the player whose model is being fit
+        hyperparams (dict): the hyperparams to save
+    &#34;&#34;&#34;
+
+    save_path = os.path.join(
+        get_models_location(),
+        model_name,
+        f&#39;{player_id}-{datetime.now().strftime(&#39;%Y%m%d&#39;)}.json&#39;
+    )
+    with open(save_path, &#39;w&#39;) as f:
+        json.dump(hyperparams, f)
+
+
+def check_for_hyperparams(model_name, player_id):
+    &#34;&#34;&#34;Check to see if up to date hyperparams exist for desired model/player
+    
+    model hyperparams are saved to /models/model_name as player_id-%Y%m%d.json
+    and are set to &#34;expire&#34; every 90 days. Models saved as individual json
+    files to avoid loading a huge json into memory each time this is needed.
+
+    Parameters:
+        model_name (str): the name of the model, e.g. pitch_outcome
+        player_id (int): the mlb_id of the player whose model is being fit
+    &#34;&#34;&#34;
+
+    model_folder = os.path.join(get_models_location(), model_name)
+    saved_params = os.listdir(model_folder)
+
+    for file in saved_params:
+
+        try:
+            parts = file.split(&#39;-&#39;)
+            mlb_id, rest = parts
+
+            # if mlb id found, check if model hyperparams tuned within 90 days
+            if mlb_id == str(player_id):
+                date_part = rest.replace(&#39;.json&#39;, &#39;&#39;)
+                date_created = datetime.strptime(date_part, &#39;%Y%m%d&#39;)
+                if datetime.now() - date_created &gt; timedelta(days=90):
+                    return False
+                else:
+                    return os.path.join(model_folder, file)
+        except Exception as e:
+            print(
+                (f&#39;Found invalid file format in {model_folder}: {e} \n\n&#39;),
+                (f&#39;Files in { model_folder
+                    } should be of format: mlbid-%Y%m%d.json \n\n&#39;)
+            )
+            raise
+
+    return False
+
+def categorical_model_pipeline(model, data, target_col):
+    &#34;&#34;&#34;
+    Creates and returns a machine learning pipeline for categorical data using
+    XGBoost or other scikit-learn compatible models
+
+    This function prepares the data by encoding the target column and applying
+    necessary transformations to the features. It constructs a pipeline that
+    includes preprocessing steps for numeric and categorical features and a
+    specified classification model
+
+    Parameters:
+        model (class): The model class to be used for classification. It
+        should be compatible with scikit-learn pipelines (have a .fit,
+        .pred_proba method etc)
+        data (pd.DataFrame): The input dataframe containing features and the
+        target column
+        target_col (str): The name of the target column in the dataframe
+
+    Returns:
+        model_pipeline (Pipeline): A scikit-learn pipeline with preprocessing
+        steps and the classifier
+        label_encoder (LabelEncoder): The label encoder fitted on the target
+        column
+        features (pd.DataFrame): The feature columns after dropping the target
+        column
+        target (np.ndarray): The encoded target column
+    &#34;&#34;&#34;
+
+    #encode target col &amp; split into X, y
     le = LabelEncoder()
     features = data.drop(columns=[target_col])
     target = le.fit_transform(data[target_col])
 
-    # if not splitting data, train model on the entire input set.
-    X_test, y_test = None, None
-    if split_data:
-        X_train, X_test, y_train, y_test = train_test_split(
-                features, target, test_size=0.05, shuffle=False)
-    else:
-        X_train, y_train = features, target
-
-    numeric_features = features.select_dtypes(include=[&#39;float64&#39;, &#39;int64&#39;]).columns
-    categorical_features = features.select_dtypes(include=[&#39;object&#39;]).columns
+    # identify numerical/categorical columns
+    numeric_features = features.select_dtypes(
+        include=[&#39;float64&#39;, &#39;int64&#39;]
+    ).columns
+    categorical_features = features.select_dtypes(
+        include=[&#39;object&#39;]
+    ).columns
 
     preprocessor = ColumnTransformer(transformers=[
         (&#39;num&#39;, StandardScaler(), numeric_features),
@@ -65,22 +156,32 @@ def categorical_model_pipeline(model, model_params, data, target_col,
 
     model = Pipeline(steps=[
         (&#39;preprocessor&#39;, preprocessor),
-        (&#39;classifier&#39;, model(**model_params))
+        (&#39;classifier&#39;, model())
     ])
 
-    # Train the model
-    model.fit(X_train, y_train)
-
-    if split_data:
-        return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
-
-    return deepcopy(model), deepcopy(le)
+    return deepcopy(model), deepcopy(le), features, target
 
 
 def sample_predictions(classifier, X):
-    &#34;&#34;&#34; Given a classifier with a predict_proba method and input features X
-        generate a random sample.
     &#34;&#34;&#34;
+    Generates a random sample of predictions given a classifier with a
+    predict_proba method and input features X
+
+    This function uses the predicted probabilities from the classifier to
+    generate a sample of class predictions based on the probability
+    distribution
+
+    Parameters:
+        classifier (object): A trained classifier that has a `predict_proba`
+        method
+        X (pd.DataFrame or np.ndarray): The input features for which to
+        generate predictions
+
+    Returns:
+        np.ndarray: An array of sampled predictions based on the predicted
+        probabilities
+    &#34;&#34;&#34;
+    
     pred_proba = classifier.predict_proba(X)
     sampled_predictions = np.array([
         np.random.choice(classifier.classes_, p=proba) for
@@ -148,7 +249,29 @@ def classifier_report(model, label_encoder, X_test, y_test):
 
     categorical_chisquare(model, label_encoder, X_test, y_test)
 
-def param_optim(model, X_train, X_test, y_train, y_test):
+def xgb_hyperparam_optimizer(model, X, y):
+    &#34;&#34;&#34;
+    Optimizes hyperparameters for an XGBoost model using a grouped parameter
+    grid and log loss as the evaluation metric
+
+    This function performs hyperparameter optimization for the given XGBoost
+    model by splitting the data into training and testing sets, then
+    iteratively searching through predefined groups of hyperparameters to find
+    the combination that yields the best log loss on the test set
+
+    Parameters:
+        model (sklearn.pipeline.Pipeline): A scikit-learn pipeline object that
+        includes an XGBoost classifier
+        X (pd.DataFrame or np.ndarray): The input features
+        y (pd.Series or np.ndarray): The target variable
+
+    Returns:
+        dict: A dictionary containing the best hyperparameters found during the
+        optimization process.
+    &#34;&#34;&#34;
+
+    X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.20, shuffle=False)
 
     grouped_param_grid = [
         {
@@ -165,16 +288,16 @@ def param_optim(model, X_train, X_test, y_train, y_test):
         }
     ]
 
-    all_best_params = {}
+    # use mlogloss always
+    all_best_params = {&#39;classifier__eval_metric&#39;:&#39;mlogloss&#39;}
     for param_group in grouped_param_grid:
-        print(f&#39;Cur param group: {list(param_group.keys())}&#39;)
         best_loss = float(&#39;inf&#39;)
         best_params = {}
 
         for params in ParameterGrid(param_group):
             #fit model with cur param group params and previous 
             #param group params
-            model.set_params(**params, **all_best_params)
+            model.set_params(**all_best_params, **params)
             model.fit(X_train, y_train)
 
             #find model with best log loss on test set
@@ -209,62 +332,9 @@ if __name__ == &#39;__main__&#39;:
     showtime = 660271
     crowser = 681297
 
-    batter_id = vladdy
-    
-    params = {&#39;eval_metric&#39;:&#39;mlogloss&#39;}
-    data = query_mlb_db(f&#39;&#39;&#39;
-        select 
-            case
-                when description=&#39;swinging_strike&#39; 
-                        or description=&#39;swinging_strike_blocked&#39; 
-                        or description=&#39;called_strike&#39; 
-                        or description=&#39;foul_tip&#39; 
-                        or description=&#39;swinging_pitchout&#39;
-                    then &#39;strike&#39;
-                when description=&#39;foul&#39;
-                        or description=&#39;foul_pitchout&#39;
-                    then &#39;foul&#39;
-                when description=&#39;ball&#39;
-                        or description=&#39;blocked_ball&#39;
-                        or description=&#39;pitchout&#39;
-                    then &#39;ball&#39;
-                /* when description=&#39;hit_by_pitch&#39; then &#39;hit_by_pitch&#39; */
-                when description=&#39;hit_into_play&#39; then &#39;hit_into_play&#39;
-                else NULL
-            end as pitch_outcome,
-            p_throws,
-            pitch_number, strikes, balls,
-            release_speed, 
-            release_spin_rate, 
-            plate_x, plate_z
-        from Statcast
-        where batter={batter_id}
-        and pitch_outcome &amp; p_throws &amp; pitch_number &amp; strikes &amp; balls &amp;
-            release_speed &amp;
-            release_spin_rate &amp;
-            plate_x &amp; plate_z
-        is not null
-        order by game_date asc, at_bat_number asc, pitch_number asc;
-                        &#39;&#39;&#39;)
-    data = data.tail(8000)
-    print(data.columns)
-    exit()
+    batter_id = soto
 
-
-    target_col = &#39;pitch_outcome&#39;
-
-    model, le, X_train, X_test, y_train, y_test = categorical_model_pipeline(
-            xgb.XGBClassifier,
-            params,
-            data,
-            target_col,
-            split_data=True
-        )
-
-    best_params = param_optim(model, X_train, X_test, y_train, y_test)
-    model.set_params(**best_params)
-    model.fit(X_train, y_train)
-    classifier_report(model, le, X_test, y_test)</code></pre>
+    check_for_hyperparams(&#39;pitch_outcome&#39;, batter_id)</code></pre>
 </details>
 </section>
 <section>
@@ -333,32 +403,74 @@ if __name__ == &#39;__main__&#39;:
 </details>
 </dd>
 <dt id="mlb_simulator.models.model_utils.categorical_model_pipeline"><code class="name flex">
-<span>def <span class="ident">categorical_model_pipeline</span></span>(<span>model, model_params, data, target_col, split_data=False)</span>
+<span>def <span class="ident">categorical_model_pipeline</span></span>(<span>model, data, target_col)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Creates and returns a machine learning pipeline for categorical data using
+XGBoost or other scikit-learn compatible models</p>
+<p>This function prepares the data by encoding the target column and applying
+necessary transformations to the features. It constructs a pipeline that
+includes preprocessing steps for numeric and categorical features and a
+specified classification model</p>
+<h2 id="parameters">Parameters</h2>
+<p>model (class): The model class to be used for classification. It
+should be compatible with scikit-learn pipelines (have a .fit,
+.pred_proba method etc)
+data (pd.DataFrame): The input dataframe containing features and the
+target column
+target_col (str): The name of the target column in the dataframe</p>
+<h2 id="returns">Returns</h2>
+<p>model_pipeline (Pipeline): A scikit-learn pipeline with preprocessing
+steps and the classifier
+label_encoder (LabelEncoder): The label encoder fitted on the target
+column
+features (pd.DataFrame): The feature columns after dropping the target
+column
+target (np.ndarray): The encoded target column</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def categorical_model_pipeline(model, model_params, data, target_col,
-                       split_data=False):
+<pre><code class="python">def categorical_model_pipeline(model, data, target_col):
+    &#34;&#34;&#34;
+    Creates and returns a machine learning pipeline for categorical data using
+    XGBoost or other scikit-learn compatible models
 
-    #encode target col
+    This function prepares the data by encoding the target column and applying
+    necessary transformations to the features. It constructs a pipeline that
+    includes preprocessing steps for numeric and categorical features and a
+    specified classification model
+
+    Parameters:
+        model (class): The model class to be used for classification. It
+        should be compatible with scikit-learn pipelines (have a .fit,
+        .pred_proba method etc)
+        data (pd.DataFrame): The input dataframe containing features and the
+        target column
+        target_col (str): The name of the target column in the dataframe
+
+    Returns:
+        model_pipeline (Pipeline): A scikit-learn pipeline with preprocessing
+        steps and the classifier
+        label_encoder (LabelEncoder): The label encoder fitted on the target
+        column
+        features (pd.DataFrame): The feature columns after dropping the target
+        column
+        target (np.ndarray): The encoded target column
+    &#34;&#34;&#34;
+
+    #encode target col &amp; split into X, y
     le = LabelEncoder()
     features = data.drop(columns=[target_col])
     target = le.fit_transform(data[target_col])
 
-    # if not splitting data, train model on the entire input set.
-    X_test, y_test = None, None
-    if split_data:
-        X_train, X_test, y_train, y_test = train_test_split(
-                features, target, test_size=0.05, shuffle=False)
-    else:
-        X_train, y_train = features, target
-
-    numeric_features = features.select_dtypes(include=[&#39;float64&#39;, &#39;int64&#39;]).columns
-    categorical_features = features.select_dtypes(include=[&#39;object&#39;]).columns
+    # identify numerical/categorical columns
+    numeric_features = features.select_dtypes(
+        include=[&#39;float64&#39;, &#39;int64&#39;]
+    ).columns
+    categorical_features = features.select_dtypes(
+        include=[&#39;object&#39;]
+    ).columns
 
     preprocessor = ColumnTransformer(transformers=[
         (&#39;num&#39;, StandardScaler(), numeric_features),
@@ -367,16 +479,65 @@ if __name__ == &#39;__main__&#39;:
 
     model = Pipeline(steps=[
         (&#39;preprocessor&#39;, preprocessor),
-        (&#39;classifier&#39;, model(**model_params))
+        (&#39;classifier&#39;, model())
     ])
 
-    # Train the model
-    model.fit(X_train, y_train)
+    return deepcopy(model), deepcopy(le), features, target</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.models.model_utils.check_for_hyperparams"><code class="name flex">
+<span>def <span class="ident">check_for_hyperparams</span></span>(<span>model_name, player_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check to see if up to date hyperparams exist for desired model/player</p>
+<p>model hyperparams are saved to /models/model_name as player_id-%Y%m%d.json
+and are set to "expire" every 90 days. Models saved as individual json
+files to avoid loading a huge json into memory each time this is needed.</p>
+<h2 id="parameters">Parameters</h2>
+<p>model_name (str): the name of the model, e.g. pitch_outcome
+player_id (int): the mlb_id of the player whose model is being fit</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_for_hyperparams(model_name, player_id):
+    &#34;&#34;&#34;Check to see if up to date hyperparams exist for desired model/player
+    
+    model hyperparams are saved to /models/model_name as player_id-%Y%m%d.json
+    and are set to &#34;expire&#34; every 90 days. Models saved as individual json
+    files to avoid loading a huge json into memory each time this is needed.
 
-    if split_data:
-        return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
+    Parameters:
+        model_name (str): the name of the model, e.g. pitch_outcome
+        player_id (int): the mlb_id of the player whose model is being fit
+    &#34;&#34;&#34;
 
-    return deepcopy(model), deepcopy(le)</code></pre>
+    model_folder = os.path.join(get_models_location(), model_name)
+    saved_params = os.listdir(model_folder)
+
+    for file in saved_params:
+
+        try:
+            parts = file.split(&#39;-&#39;)
+            mlb_id, rest = parts
+
+            # if mlb id found, check if model hyperparams tuned within 90 days
+            if mlb_id == str(player_id):
+                date_part = rest.replace(&#39;.json&#39;, &#39;&#39;)
+                date_created = datetime.strptime(date_part, &#39;%Y%m%d&#39;)
+                if datetime.now() - date_created &gt; timedelta(days=90):
+                    return False
+                else:
+                    return os.path.join(model_folder, file)
+        except Exception as e:
+            print(
+                (f&#39;Found invalid file format in {model_folder}: {e} \n\n&#39;),
+                (f&#39;Files in { model_folder
+                    } should be of format: mlbid-%Y%m%d.json \n\n&#39;)
+            )
+            raise
+
+    return False</code></pre>
 </details>
 </dd>
 <dt id="mlb_simulator.models.model_utils.classifier_report"><code class="name flex">
@@ -433,16 +594,140 @@ if __name__ == &#39;__main__&#39;:
     return loglik</code></pre>
 </details>
 </dd>
-<dt id="mlb_simulator.models.model_utils.param_optim"><code class="name flex">
-<span>def <span class="ident">param_optim</span></span>(<span>model, X_train, X_test, y_train, y_test)</span>
+<dt id="mlb_simulator.models.model_utils.sample_predictions"><code class="name flex">
+<span>def <span class="ident">sample_predictions</span></span>(<span>classifier, X)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Generates a random sample of predictions given a classifier with a
+predict_proba method and input features X</p>
+<p>This function uses the predicted probabilities from the classifier to
+generate a sample of class predictions based on the probability
+distribution</p>
+<h2 id="parameters">Parameters</h2>
+<p>classifier (object): A trained classifier that has a <code>predict_proba</code>
+method
+X (pd.DataFrame or np.ndarray): The input features for which to
+generate predictions</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An array of sampled predictions based on the predicted</dd>
+</dl>
+<p>probabilities</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def param_optim(model, X_train, X_test, y_train, y_test):
+<pre><code class="python">def sample_predictions(classifier, X):
+    &#34;&#34;&#34;
+    Generates a random sample of predictions given a classifier with a
+    predict_proba method and input features X
+
+    This function uses the predicted probabilities from the classifier to
+    generate a sample of class predictions based on the probability
+    distribution
+
+    Parameters:
+        classifier (object): A trained classifier that has a `predict_proba`
+        method
+        X (pd.DataFrame or np.ndarray): The input features for which to
+        generate predictions
+
+    Returns:
+        np.ndarray: An array of sampled predictions based on the predicted
+        probabilities
+    &#34;&#34;&#34;
+    
+    pred_proba = classifier.predict_proba(X)
+    sampled_predictions = np.array([
+        np.random.choice(classifier.classes_, p=proba) for
+            proba in pred_proba
+    ])
+
+    return sampled_predictions</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.models.model_utils.save_hyperparams"><code class="name flex">
+<span>def <span class="ident">save_hyperparams</span></span>(<span>model_name, player_id, hyperparams: dict)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Save hyperparams to a json file</p>
+<h2 id="parameters">Parameters</h2>
+<p>model_name (str): the name of the model being saved. Crutial to ensure
+model gets saved to correct path
+player_id (int): the mlbid of the player whose model is being fit
+hyperparams (dict): the hyperparams to save</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_hyperparams(model_name, player_id, hyperparams: dict):
+    &#34;&#34;&#34;Save hyperparams to a json file
+
+    Parameters:
+        model_name (str): the name of the model being saved. Crutial to ensure 
+        model gets saved to correct path
+        player_id (int): the mlbid of the player whose model is being fit
+        hyperparams (dict): the hyperparams to save
+    &#34;&#34;&#34;
+
+    save_path = os.path.join(
+        get_models_location(),
+        model_name,
+        f&#39;{player_id}-{datetime.now().strftime(&#39;%Y%m%d&#39;)}.json&#39;
+    )
+    with open(save_path, &#39;w&#39;) as f:
+        json.dump(hyperparams, f)</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.models.model_utils.xgb_hyperparam_optimizer"><code class="name flex">
+<span>def <span class="ident">xgb_hyperparam_optimizer</span></span>(<span>model, X, y)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Optimizes hyperparameters for an XGBoost model using a grouped parameter
+grid and log loss as the evaluation metric</p>
+<p>This function performs hyperparameter optimization for the given XGBoost
+model by splitting the data into training and testing sets, then
+iteratively searching through predefined groups of hyperparameters to find
+the combination that yields the best log loss on the test set</p>
+<h2 id="parameters">Parameters</h2>
+<p>model (sklearn.pipeline.Pipeline): A scikit-learn pipeline object that
+includes an XGBoost classifier
+X (pd.DataFrame or np.ndarray): The input features
+y (pd.Series or np.ndarray): The target variable</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict</code></dt>
+<dd>A dictionary containing the best hyperparameters found during the</dd>
+</dl>
+<p>optimization process.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def xgb_hyperparam_optimizer(model, X, y):
+    &#34;&#34;&#34;
+    Optimizes hyperparameters for an XGBoost model using a grouped parameter
+    grid and log loss as the evaluation metric
+
+    This function performs hyperparameter optimization for the given XGBoost
+    model by splitting the data into training and testing sets, then
+    iteratively searching through predefined groups of hyperparameters to find
+    the combination that yields the best log loss on the test set
+
+    Parameters:
+        model (sklearn.pipeline.Pipeline): A scikit-learn pipeline object that
+        includes an XGBoost classifier
+        X (pd.DataFrame or np.ndarray): The input features
+        y (pd.Series or np.ndarray): The target variable
+
+    Returns:
+        dict: A dictionary containing the best hyperparameters found during the
+        optimization process.
+    &#34;&#34;&#34;
+
+    X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.20, shuffle=False)
 
     grouped_param_grid = [
         {
@@ -459,16 +744,16 @@ if __name__ == &#39;__main__&#39;:
         }
     ]
 
-    all_best_params = {}
+    # use mlogloss always
+    all_best_params = {&#39;classifier__eval_metric&#39;:&#39;mlogloss&#39;}
     for param_group in grouped_param_grid:
-        print(f&#39;Cur param group: {list(param_group.keys())}&#39;)
         best_loss = float(&#39;inf&#39;)
         best_params = {}
 
         for params in ParameterGrid(param_group):
             #fit model with cur param group params and previous 
             #param group params
-            model.set_params(**params, **all_best_params)
+            model.set_params(**all_best_params, **params)
             model.fit(X_train, y_train)
 
             #find model with best log loss on test set
@@ -480,29 +765,6 @@ if __name__ == &#39;__main__&#39;:
         all_best_params = {**all_best_params, **best_params}
 
     return all_best_params</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.models.model_utils.sample_predictions"><code class="name flex">
-<span>def <span class="ident">sample_predictions</span></span>(<span>classifier, X)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Given a classifier with a predict_proba method and input features X
-generate a random sample.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sample_predictions(classifier, X):
-    &#34;&#34;&#34; Given a classifier with a predict_proba method and input features X
-        generate a random sample.
-    &#34;&#34;&#34;
-    pred_proba = classifier.predict_proba(X)
-    sampled_predictions = np.array([
-        np.random.choice(classifier.classes_, p=proba) for
-            proba in pred_proba
-    ])
-
-    return sampled_predictions</code></pre>
 </details>
 </dd>
 </dl>
@@ -525,11 +787,13 @@ generate a random sample.</p></div>
 <ul class="">
 <li><code><a title="mlb_simulator.models.model_utils.categorical_chisquare" href="#mlb_simulator.models.model_utils.categorical_chisquare">categorical_chisquare</a></code></li>
 <li><code><a title="mlb_simulator.models.model_utils.categorical_model_pipeline" href="#mlb_simulator.models.model_utils.categorical_model_pipeline">categorical_model_pipeline</a></code></li>
+<li><code><a title="mlb_simulator.models.model_utils.check_for_hyperparams" href="#mlb_simulator.models.model_utils.check_for_hyperparams">check_for_hyperparams</a></code></li>
 <li><code><a title="mlb_simulator.models.model_utils.classifier_report" href="#mlb_simulator.models.model_utils.classifier_report">classifier_report</a></code></li>
 <li><code><a title="mlb_simulator.models.model_utils.compute_cat_loglik" href="#mlb_simulator.models.model_utils.compute_cat_loglik">compute_cat_loglik</a></code></li>
 <li><code><a title="mlb_simulator.models.model_utils.compute_model_loglik" href="#mlb_simulator.models.model_utils.compute_model_loglik">compute_model_loglik</a></code></li>
-<li><code><a title="mlb_simulator.models.model_utils.param_optim" href="#mlb_simulator.models.model_utils.param_optim">param_optim</a></code></li>
 <li><code><a title="mlb_simulator.models.model_utils.sample_predictions" href="#mlb_simulator.models.model_utils.sample_predictions">sample_predictions</a></code></li>
+<li><code><a title="mlb_simulator.models.model_utils.save_hyperparams" href="#mlb_simulator.models.model_utils.save_hyperparams">save_hyperparams</a></code></li>
+<li><code><a title="mlb_simulator.models.model_utils.xgb_hyperparam_optimizer" href="#mlb_simulator.models.model_utils.xgb_hyperparam_optimizer">xgb_hyperparam_optimizer</a></code></li>
 </ul>
 </li>
 </ul>

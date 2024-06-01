@@ -35,22 +35,38 @@ import pathlib
 import subprocess
 
 def get_db_location() -&gt; str:
-    &#34;&#34;&#34;gets path for database 
+    &#34;&#34;&#34;Gets path for mlb.db database 
+
+    Default location is set to ~/sports/mlb_simulator/data/databases/mlb.db
 
     Returns:
         str: db path
     &#34;&#34;&#34;
+
     home_dir = pathlib.Path.home()
-    DB_PATH = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;data&#39;,
+    db_path = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;data&#39;,
                            &#39;databases&#39;, &#39;mlb.db&#39;)
-    return DB_PATH 
+    return db_path 
+
+def get_models_location() -&gt; str:
+    &#34;&#34;&#34;Gets path for models folder
+
+    Returns:
+        str: path to models folder
+    &#34;&#34;&#34;
+
+    home_dir = pathlib.Path.home()
+    path = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;models&#39;)
+
+    return path
 
 def get_mlb_db_engine() -&gt; engine.Engine:
-    &#34;&#34;&#34;Get an engine for the database. 
+    &#34;&#34;&#34;Get a sqlalchemy engine for the mlb.db 
 
     Returns:
         engine: sqlalchemy engine connected to the master db
     &#34;&#34;&#34;
+
     try:
         db_path = get_db_location()
         engine = create_engine(f&#39;sqlite:///{db_path}&#39;, echo=False)
@@ -62,12 +78,15 @@ def get_mlb_db_engine() -&gt; engine.Engine:
 def query_mlb_db(query_str) -&gt; pd.DataFrame:
     &#34;&#34;&#34;Function to query the mlb database
 
+    Using get_mlb_db_engine(), obtains an engine 
+
     Args:
         query_str (str): the query to send to the mlb database
 
     Returns:
         pd.DataFrame: dataframe of query
     &#34;&#34;&#34;
+
     try:
         engine = get_mlb_db_engine()
         df = pd.read_sql(query_str, engine)
@@ -76,19 +95,34 @@ def query_mlb_db(query_str) -&gt; pd.DataFrame:
         raise
     return df
 
-def git_pull(repo_path, logger):
+def git_pull(repo_path) -&gt; None:
+    &#34;&#34;&#34;Function to pull a git repo
+
+    Args:
+        repo_path (str): The path to the local git repo you wish to pull
+    &#34;&#34;&#34;
+
     try:
         subprocess.run([&#39;git&#39;, &#39;pull&#39;], cwd=repo_path, check=True)
-        logger.info(&#34;Repository successfully pulled&#34;)
+        print(f&#34;{repo_path} sucessfully pulled&#34;)
     except subprocess.CalledProcessError as e:
-        logger.error(f&#34;Error pulling repository: {e}&#34;)
+        print(f&#34;Error pulling repository: {e}&#34;)
+        raise
 
-def git_clone(repo_url, save_path, logger):
+def git_clone(repo_url, save_path):
+    &#34;&#34;&#34;Function to clone a git repo
+
+    Args:
+        repo_url (str): The url to the git repo you wish to pull
+        save_path (str): The path you wish to save the pulled repo to
+    &#34;&#34;&#34;
+
     try:
         subprocess.run([&#39;git&#39;, &#39;clone&#39;, repo_url, save_path], check=True)
-        logger.info(&#34;Repository successfully cloned&#34;)
+        print(f&#34;{repo_url} successfully cloned to {save_path}&#34;)
     except subprocess.CalledProcessError as e:
-        logger.error(f&#34;Error cloning repository: {e}&#34;)</code></pre>
+        print(f&#34;Error cloning repository: {e}&#34;)
+        raise</code></pre>
 </details>
 </section>
 <section>
@@ -102,7 +136,8 @@ def git_clone(repo_url, save_path, logger):
 <span>def <span class="ident">get_db_location</span></span>(<span>) ‑> str</span>
 </code></dt>
 <dd>
-<div class="desc"><p>gets path for database </p>
+<div class="desc"><p>Gets path for mlb.db database </p>
+<p>Default location is set to ~/sports/mlb_simulator/data/databases/mlb.db</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>str</code></dt>
@@ -113,22 +148,25 @@ def git_clone(repo_url, save_path, logger):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_db_location() -&gt; str:
-    &#34;&#34;&#34;gets path for database 
+    &#34;&#34;&#34;Gets path for mlb.db database 
+
+    Default location is set to ~/sports/mlb_simulator/data/databases/mlb.db
 
     Returns:
         str: db path
     &#34;&#34;&#34;
+
     home_dir = pathlib.Path.home()
-    DB_PATH = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;data&#39;,
+    db_path = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;data&#39;,
                            &#39;databases&#39;, &#39;mlb.db&#39;)
-    return DB_PATH </code></pre>
+    return db_path </code></pre>
 </details>
 </dd>
 <dt id="mlb_simulator.data.data_utils.get_mlb_db_engine"><code class="name flex">
 <span>def <span class="ident">get_mlb_db_engine</span></span>(<span>) ‑> sqlalchemy.engine.base.Engine</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Get an engine for the database. </p>
+<div class="desc"><p>Get a sqlalchemy engine for the mlb.db </p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>engine</code></dt>
@@ -139,11 +177,12 @@ def git_clone(repo_url, save_path, logger):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_mlb_db_engine() -&gt; engine.Engine:
-    &#34;&#34;&#34;Get an engine for the database. 
+    &#34;&#34;&#34;Get a sqlalchemy engine for the mlb.db 
 
     Returns:
         engine: sqlalchemy engine connected to the master db
     &#34;&#34;&#34;
+
     try:
         db_path = get_db_location()
         engine = create_engine(f&#39;sqlite:///{db_path}&#39;, echo=False)
@@ -153,38 +192,92 @@ def git_clone(repo_url, save_path, logger):
     return engine</code></pre>
 </details>
 </dd>
-<dt id="mlb_simulator.data.data_utils.git_clone"><code class="name flex">
-<span>def <span class="ident">git_clone</span></span>(<span>repo_url, save_path, logger)</span>
+<dt id="mlb_simulator.data.data_utils.get_models_location"><code class="name flex">
+<span>def <span class="ident">get_models_location</span></span>(<span>) ‑> str</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Gets path for models folder</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>path to models folder</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def git_clone(repo_url, save_path, logger):
+<pre><code class="python">def get_models_location() -&gt; str:
+    &#34;&#34;&#34;Gets path for models folder
+
+    Returns:
+        str: path to models folder
+    &#34;&#34;&#34;
+
+    home_dir = pathlib.Path.home()
+    path = os.path.join(home_dir, &#39;sports&#39;, &#39;mlb_simulator&#39;, &#39;models&#39;)
+
+    return path</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.data.data_utils.git_clone"><code class="name flex">
+<span>def <span class="ident">git_clone</span></span>(<span>repo_url, save_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Function to clone a git repo</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>repo_url</code></strong> :&ensp;<code>str</code></dt>
+<dd>The url to the git repo you wish to pull</dd>
+<dt><strong><code>save_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path you wish to save the pulled repo to</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def git_clone(repo_url, save_path):
+    &#34;&#34;&#34;Function to clone a git repo
+
+    Args:
+        repo_url (str): The url to the git repo you wish to pull
+        save_path (str): The path you wish to save the pulled repo to
+    &#34;&#34;&#34;
+
     try:
         subprocess.run([&#39;git&#39;, &#39;clone&#39;, repo_url, save_path], check=True)
-        logger.info(&#34;Repository successfully cloned&#34;)
+        print(f&#34;{repo_url} successfully cloned to {save_path}&#34;)
     except subprocess.CalledProcessError as e:
-        logger.error(f&#34;Error cloning repository: {e}&#34;)</code></pre>
+        print(f&#34;Error cloning repository: {e}&#34;)
+        raise</code></pre>
 </details>
 </dd>
 <dt id="mlb_simulator.data.data_utils.git_pull"><code class="name flex">
-<span>def <span class="ident">git_pull</span></span>(<span>repo_path, logger)</span>
+<span>def <span class="ident">git_pull</span></span>(<span>repo_path) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Function to pull a git repo</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>repo_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the local git repo you wish to pull</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def git_pull(repo_path, logger):
+<pre><code class="python">def git_pull(repo_path) -&gt; None:
+    &#34;&#34;&#34;Function to pull a git repo
+
+    Args:
+        repo_path (str): The path to the local git repo you wish to pull
+    &#34;&#34;&#34;
+
     try:
         subprocess.run([&#39;git&#39;, &#39;pull&#39;], cwd=repo_path, check=True)
-        logger.info(&#34;Repository successfully pulled&#34;)
+        print(f&#34;{repo_path} sucessfully pulled&#34;)
     except subprocess.CalledProcessError as e:
-        logger.error(f&#34;Error pulling repository: {e}&#34;)</code></pre>
+        print(f&#34;Error pulling repository: {e}&#34;)
+        raise</code></pre>
 </details>
 </dd>
 <dt id="mlb_simulator.data.data_utils.query_mlb_db"><code class="name flex">
@@ -192,6 +285,7 @@ def git_clone(repo_url, save_path, logger):
 </code></dt>
 <dd>
 <div class="desc"><p>Function to query the mlb database</p>
+<p>Using get_mlb_db_engine(), obtains an engine </p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>query_str</code></strong> :&ensp;<code>str</code></dt>
@@ -209,12 +303,15 @@ def git_clone(repo_url, save_path, logger):
 <pre><code class="python">def query_mlb_db(query_str) -&gt; pd.DataFrame:
     &#34;&#34;&#34;Function to query the mlb database
 
+    Using get_mlb_db_engine(), obtains an engine 
+
     Args:
         query_str (str): the query to send to the mlb database
 
     Returns:
         pd.DataFrame: dataframe of query
     &#34;&#34;&#34;
+
     try:
         engine = get_mlb_db_engine()
         df = pd.read_sql(query_str, engine)
@@ -241,9 +338,10 @@ def git_clone(repo_url, save_path, logger):
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="mlb_simulator.data.data_utils.get_db_location" href="#mlb_simulator.data.data_utils.get_db_location">get_db_location</a></code></li>
 <li><code><a title="mlb_simulator.data.data_utils.get_mlb_db_engine" href="#mlb_simulator.data.data_utils.get_mlb_db_engine">get_mlb_db_engine</a></code></li>
+<li><code><a title="mlb_simulator.data.data_utils.get_models_location" href="#mlb_simulator.data.data_utils.get_models_location">get_models_location</a></code></li>
 <li><code><a title="mlb_simulator.data.data_utils.git_clone" href="#mlb_simulator.data.data_utils.git_clone">git_clone</a></code></li>
 <li><code><a title="mlb_simulator.data.data_utils.git_pull" href="#mlb_simulator.data.data_utils.git_pull">git_pull</a></code></li>
 <li><code><a title="mlb_simulator.data.data_utils.query_mlb_db" href="#mlb_simulator.data.data_utils.query_mlb_db">query_mlb_db</a></code></li>

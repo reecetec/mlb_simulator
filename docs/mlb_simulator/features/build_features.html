@@ -26,43 +26,84 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">#using functions from data utils, constructs a featureset for a model
-#from src.data.data_utils import query_mlb_db
-#from src.features.sql_dataset_loader import SQLiteDataset
-
-import sys
-import os
-import pathlib
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
-from data.data_utils import query_mlb_db
-from features.sql_dataset_loader import SQLiteDataset
-from torch.utils.data import DataLoader
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-from copy import deepcopy
-import logging
-import torch
+<pre><code class="python">from mlb_simulator.data.data_utils import query_mlb_db
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-log_fmt = &#39;%(asctime)s - %(name)s - %(levelname)s - %(message)s&#39;
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-import warnings
-warnings.simplefilter(action=&#39;ignore&#39;, category=FutureWarning)
-
-PITCH_CHARACTERISITCS = [
-    &#39;release_speed&#39;, &#39;release_spin_rate&#39;, &#39;release_extension&#39;,
-    &#39;release_pos_x&#39;, &#39;release_pos_y&#39;, &#39;release_pos_z&#39;,
-    &#39;spin_axis&#39;, &#39;pfx_x&#39;, &#39;pfx_z&#39;,
-    &#39;vx0&#39;, &#39;vy0&#39;, &#39;vz0&#39;,
-    &#39;ax&#39;, &#39;ay&#39;, &#39;az&#39;,
-    &#39;plate_x&#39;, &#39;plate_z&#39;
+# pitch characteristics to be generated/put into pitch outcome model
+_pitch_characteristics = [
+    &#39;release_speed&#39;, &#39;release_spin_rate&#39;,
+    &#39;plate_x&#39;, &#39;plate_z&#39;,
 ]
+_pitch_outcome_game_state_features = &#39;p_throws strikes balls&#39;.split()
 
+PITCH_OUTCOME_FEATURES = _pitch_characteristics + \
+                         _pitch_outcome_game_state_features
+PITCH_OUTCOME_TARGET_COL = &#39;pitch_outcome&#39;
+
+
+def get_pitch_outcome_data(batter_id: int,
+                           backtest_date=None) -&gt; tuple[pd.DataFrame, str]:
+    f&#34;&#34;&#34;Function to get training data for a batter&#39;s pitch outcome model
+
+    For a given player, returns the model features for the pitch outcome model 
+    {PITCH_OUTCOME_FEATURES} and the pitch_outcome (the target for this model).
+    If a backtest date is supplied, will only return data before the backtest
+    date.
+
+    Args:
+        batter_id (int): the batter&#39;s mlb id
+        backtest_date (str): get data up to backtest_date (default None)
+
+    Returns:
+        tuple: A tuple containing:
+            - pd.DataFrame: a dataframe containing the query results
+            - str: the name of the target col for this model
+
+    Example:
+        &gt;&gt;&gt; df = get_pitch_outcome_data(665742, backtest_date=&#39;2022-01-01&#39;)
+        &gt;&gt;&gt; df.head()
+    &#34;&#34;&#34;
+
+    # format input backtest date as query
+    if backtest_date is not None:
+        backtest_date = f&#34;and game_date &lt;= date(&#39;{backtest_date}&#39;)&#34;
+    else:
+        backtest_date = &#39;&#39;
+
+    query_str = f&#34;&#34;&#34;
+        select 
+            case
+                when description=&#39;swinging_strike&#39; or
+                     description=&#39;swinging_strike_blocked&#39; or
+                     description=&#39;called_strike&#39; or description=&#39;foul_tip&#39; or
+                     description=&#39;swinging_pitchout&#39;
+                then &#39;strike&#39;
+                when description=&#39;foul&#39; or
+                     description=&#39;foul_pitchout&#39; 
+                then &#39;foul&#39;
+                when description=&#39;ball&#39; or
+                     description=&#39;blocked_ball&#39; or
+                     description=&#39;pitchout&#39; 
+                then &#39;ball&#39;
+                when description=&#39;hit_by_pitch&#39; then &#39;hit_by_pitch&#39;
+                when description=&#39;hit_into_play&#39; then &#39;hit_into_play&#39;
+                else NULL
+            end as {PITCH_OUTCOME_TARGET_COL},
+            {&#39;, &#39;.join(PITCH_OUTCOME_FEATURES)}
+        from Statcast
+        where batter={batter_id}
+        and {&#39; &amp; &#39;.join(PITCH_OUTCOME_FEATURES)} 
+        is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    &#34;&#34;&#34;
+
+    df = query_mlb_db(query_str)
+
+    return df, PITCH_OUTCOME_TARGET_COL
+
+
+#=============================================================================
 def get_xgb_set(df, target_col, split=False, test_size=0.1):
     encoders = {} # to store encoders
 
@@ -653,13 +694,17 @@ if __name__ == &#39;__main__&#39;:
         #print(f&#39;label encoder: {label_encoders}&#39;)
         #print(f&#39;training batches: {len(train_dataloader)}, val batches: {len(val_dataloader)}&#39;)
        #break
-    kukuchi = 579328
-    jones = 683003
+    #kukuchi = 579328
+    #jones = 683003
 
-    pitcher = kukuchi
+    #pitcher = kukuchi
 
-    all_pitches = get_pitches(pitcher,&#39;L&#39;,&#39;CU&#39;)
-    print(all_pitches.head())</code></pre>
+    #all_pitches = get_pitches(pitcher,&#39;L&#39;,&#39;CU&#39;)
+    #print(all_pitches.head())
+
+    df, target_col = get_pitch_outcome_data(665742, backtest_date=&#39;2022-01-01&#39;)
+    print(target_col)
+    print(df.head())</code></pre>
 </details>
 </section>
 <section>
@@ -864,6 +909,77 @@ if __name__ == &#39;__main__&#39;:
 
     target_cols = [&#39;launch_speed&#39;, &#39;launch_angle&#39;, &#39;spray_angle&#39;]
     return get_xgb_set_regression(df, target_cols, split=split)</code></pre>
+</details>
+</dd>
+<dt id="mlb_simulator.features.build_features.get_pitch_outcome_data"><code class="name flex">
+<span>def <span class="ident">get_pitch_outcome_data</span></span>(<span>batter_id: int, backtest_date=None) ‑> tuple[pandas.core.frame.DataFrame, str]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_pitch_outcome_data(batter_id: int,
+                           backtest_date=None) -&gt; tuple[pd.DataFrame, str]:
+    f&#34;&#34;&#34;Function to get training data for a batter&#39;s pitch outcome model
+
+    For a given player, returns the model features for the pitch outcome model 
+    {PITCH_OUTCOME_FEATURES} and the pitch_outcome (the target for this model).
+    If a backtest date is supplied, will only return data before the backtest
+    date.
+
+    Args:
+        batter_id (int): the batter&#39;s mlb id
+        backtest_date (str): get data up to backtest_date (default None)
+
+    Returns:
+        tuple: A tuple containing:
+            - pd.DataFrame: a dataframe containing the query results
+            - str: the name of the target col for this model
+
+    Example:
+        &gt;&gt;&gt; df = get_pitch_outcome_data(665742, backtest_date=&#39;2022-01-01&#39;)
+        &gt;&gt;&gt; df.head()
+    &#34;&#34;&#34;
+
+    # format input backtest date as query
+    if backtest_date is not None:
+        backtest_date = f&#34;and game_date &lt;= date(&#39;{backtest_date}&#39;)&#34;
+    else:
+        backtest_date = &#39;&#39;
+
+    query_str = f&#34;&#34;&#34;
+        select 
+            case
+                when description=&#39;swinging_strike&#39; or
+                     description=&#39;swinging_strike_blocked&#39; or
+                     description=&#39;called_strike&#39; or description=&#39;foul_tip&#39; or
+                     description=&#39;swinging_pitchout&#39;
+                then &#39;strike&#39;
+                when description=&#39;foul&#39; or
+                     description=&#39;foul_pitchout&#39; 
+                then &#39;foul&#39;
+                when description=&#39;ball&#39; or
+                     description=&#39;blocked_ball&#39; or
+                     description=&#39;pitchout&#39; 
+                then &#39;ball&#39;
+                when description=&#39;hit_by_pitch&#39; then &#39;hit_by_pitch&#39;
+                when description=&#39;hit_into_play&#39; then &#39;hit_into_play&#39;
+                else NULL
+            end as {PITCH_OUTCOME_TARGET_COL},
+            {&#39;, &#39;.join(PITCH_OUTCOME_FEATURES)}
+        from Statcast
+        where batter={batter_id}
+        and {&#39; &amp; &#39;.join(PITCH_OUTCOME_FEATURES)} 
+        is not null
+        {backtest_date}
+        order by game_date asc, at_bat_number asc, pitch_number asc;
+    &#34;&#34;&#34;
+
+    df = query_mlb_db(query_str)
+
+    return df, PITCH_OUTCOME_TARGET_COL</code></pre>
 </details>
 </dd>
 <dt id="mlb_simulator.features.build_features.get_pitch_outcome_dataset"><code class="name flex">
@@ -1364,6 +1480,7 @@ if __name__ == &#39;__main__&#39;:
 <li><code><a title="mlb_simulator.features.build_features.encode_cat_cols" href="#mlb_simulator.features.build_features.encode_cat_cols">encode_cat_cols</a></code></li>
 <li><code><a title="mlb_simulator.features.build_features.get_hit_classification_dataset" href="#mlb_simulator.features.build_features.get_hit_classification_dataset">get_hit_classification_dataset</a></code></li>
 <li><code><a title="mlb_simulator.features.build_features.get_hit_outcome_dataset" href="#mlb_simulator.features.build_features.get_hit_outcome_dataset">get_hit_outcome_dataset</a></code></li>
+<li><code><a title="mlb_simulator.features.build_features.get_pitch_outcome_data" href="#mlb_simulator.features.build_features.get_pitch_outcome_data">get_pitch_outcome_data</a></code></li>
 <li><code><a title="mlb_simulator.features.build_features.get_pitch_outcome_dataset" href="#mlb_simulator.features.build_features.get_pitch_outcome_dataset">get_pitch_outcome_dataset</a></code></li>
 <li><code><a title="mlb_simulator.features.build_features.get_pitch_outcome_dataset_general" href="#mlb_simulator.features.build_features.get_pitch_outcome_dataset_general">get_pitch_outcome_dataset_general</a></code></li>
 <li><code><a title="mlb_simulator.features.build_features.get_pitch_outcome_dataset_xgb" href="#mlb_simulator.features.build_features.get_pitch_outcome_dataset_xgb">get_pitch_outcome_dataset_xgb</a></code></li>
