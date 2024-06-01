@@ -1,9 +1,12 @@
 """ 
-this model determines the pitch outcome, meaning was the ball hit,
-strike, ball, foul, or hit into play?
+Module for the pitch outcome model. This model determines the pitch outcome,
+meaning it answers the following question: was the ball hit, was there a
+strike, ball, foul?
 """
+
 from mlb_simulator.models import model_utils as mu
 from mlb_simulator.features.build_features import get_pitch_outcome_data
+
 import json
 import xgboost as xgb
 import logging
