@@ -3,6 +3,8 @@ MLB Game Simulator
 
 Simulate MLB matchup results
 
+Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/)
+
 Todo:
  - create github workflow to automatically generate docs: https://pdoc.dev/docs/pdoc.html
  - Remove need for SDV in pitch characteristic generation (extreme performance bottleneck)

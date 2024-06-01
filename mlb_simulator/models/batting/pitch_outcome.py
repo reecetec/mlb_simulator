@@ -28,6 +28,14 @@ def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
     Parameters:
         batter_id (int): the desired batter's mlb id
         backtest_date (str, optional): the date to be used if backtesting
+
+    Returns:
+        tuple: A tuple containing the following elements:
+            - model: The fitted model (sklearn.pipeline.Pipeline)
+            - le: The label encoder used for encoding target variable 
+                (sklearn.preprocessing.LabelEncoder)
+            - feature_order: A list containing the names of features in the
+                order they appear in the dataset (list[str])
     """
 
     #get the dataset and target col

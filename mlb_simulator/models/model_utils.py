@@ -24,7 +24,7 @@ def save_hyperparams(model_name, player_id, hyperparams: dict):
 
     Parameters:
         model_name (str): the name of the model being saved. Crutial to ensure 
-        model gets saved to correct path
+            model gets saved to correct path
         player_id (int): the mlbid of the player whose model is being fit
         hyperparams (dict): the hyperparams to save
     """
@@ -88,20 +88,20 @@ def categorical_model_pipeline(model, data, target_col):
     specified classification model
 
     Parameters:
-        model (class): The model class to be used for classification. It
-        should be compatible with scikit-learn pipelines (have a .fit,
-        .pred_proba method etc)
+        model (class): The model class to be used for classification. It 
+            should be compatible with scikit-learn pipelines (have a .fit,
+            .pred_proba method etc)
         data (pd.DataFrame): The input dataframe containing features and the
-        target column
+            target column
         target_col (str): The name of the target column in the dataframe
 
     Returns:
         model_pipeline (Pipeline): A scikit-learn pipeline with preprocessing
-        steps and the classifier
+            steps and the classifier
         label_encoder (LabelEncoder): The label encoder fitted on the target
-        column
+            column
         features (pd.DataFrame): The feature columns after dropping the target
-        column
+            column
         target (np.ndarray): The encoded target column
     """
 
@@ -142,13 +142,13 @@ def sample_predictions(classifier, X):
 
     Parameters:
         classifier (object): A trained classifier that has a `predict_proba`
-        method
+            method
         X (pd.DataFrame or np.ndarray): The input features for which to
-        generate predictions
+            generate predictions
 
     Returns:
         np.ndarray: An array of sampled predictions based on the predicted
-        probabilities
+            probabilities
     """
     
     pred_proba = classifier.predict_proba(X)
@@ -230,13 +230,13 @@ def xgb_hyperparam_optimizer(model, X, y):
 
     Parameters:
         model (sklearn.pipeline.Pipeline): A scikit-learn pipeline object that
-        includes an XGBoost classifier
+            includes an XGBoost classifier
         X (pd.DataFrame or np.ndarray): The input features
         y (pd.Series or np.ndarray): The target variable
 
     Returns:
         dict: A dictionary containing the best hyperparameters found during the
-        optimization process.
+            optimization process.
     """
 
     X_train, X_test, y_train, y_test = train_test_split(
