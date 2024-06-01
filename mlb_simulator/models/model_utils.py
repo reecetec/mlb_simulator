@@ -20,13 +20,14 @@ from datetime import datetime, timedelta
 
 
 def save_hyperparams(model_name, player_id, hyperparams: dict):
-    """Save hyperparams to a json file
+    """
+    Save hyperparameters to a JSON file.
 
-    Parameters:
-        model_name (str): the name of the model being saved. Crutial to ensure 
-            model gets saved to correct path
-        player_id (int): the mlbid of the player whose model is being fit
-        hyperparams (dict): the hyperparams to save
+    :param model_name: The name of the model being saved. Crucial to ensure 
+        model gets saved to correct path (str).
+    :param player_id: The mlbid of the player whose model is being fit (int).
+    :param hyperparams: The hyperparameters to save (dict).
+
     """
 
     save_path = os.path.join(
@@ -39,15 +40,17 @@ def save_hyperparams(model_name, player_id, hyperparams: dict):
 
 
 def check_for_hyperparams(model_name, player_id):
-    """Check to see if up to date hyperparams exist for desired model/player
-    
-    model hyperparams are saved to /models/model_name as player_id-%Y%m%d.json
-    and are set to "expire" every 90 days. Models saved as individual json
-    files to avoid loading a huge json into memory each time this is needed.
+    """
+    Check to see if up-to-date hyperparameters exist for desired model/player.
 
-    Parameters:
-        model_name (str): the name of the model, e.g. pitch_outcome
-        player_id (int): the mlb_id of the player whose model is being fit
+    Model hyperparameters are saved to /models/model_name as
+    player_id-%Y%m%d.json and are set to "expire" every 90 days. Models are
+    saved as individual JSON files to avoid loading a huge JSON into memory
+    each time this is needed.
+
+    :param model_name: The name of the model, e.g., "pitch_outcome" (str).
+    :param player_id: The mlb_id of the player whose model is being fit (int).
+
     """
 
     model_folder = os.path.join(get_models_location(), model_name)
@@ -80,29 +83,29 @@ def check_for_hyperparams(model_name, player_id):
 def categorical_model_pipeline(model, data, target_col):
     """
     Creates and returns a machine learning pipeline for categorical data using
-    XGBoost or other scikit-learn compatible models
+    XGBoost or other scikit-learn compatible models.
 
     This function prepares the data by encoding the target column and applying
     necessary transformations to the features. It constructs a pipeline that
     includes preprocessing steps for numeric and categorical features and a
-    specified classification model
+    specified classification model.
 
-    Parameters:
-        model (class): The model class to be used for classification. It 
-            should be compatible with scikit-learn pipelines (have a .fit,
-            .pred_proba method etc)
-        data (pd.DataFrame): The input dataframe containing features and the
-            target column
-        target_col (str): The name of the target column in the dataframe
+    :param model: The model class to be used for classification. It 
+        should be compatible with scikit-learn pipelines (have a .fit,
+        .pred_proba method, etc) (class).
+    :param data: The input dataframe containing features and the
+        target column (pd.DataFrame).
+    :param target_col: The name of the target column in the dataframe (str).
 
-    Returns:
-        model_pipeline (Pipeline): A scikit-learn pipeline with preprocessing
-            steps and the classifier
-        label_encoder (LabelEncoder): The label encoder fitted on the target
-            column
-        features (pd.DataFrame): The feature columns after dropping the target
-            column
-        target (np.ndarray): The encoded target column
+    :return: A tuple containing the following elements:
+        - model_pipeline: A scikit-learn pipeline with preprocessing
+            steps and the classifier (Pipeline).
+        - label_encoder: The label encoder fitted on the target
+            column (LabelEncoder).
+        - features: The feature columns after dropping the target
+            column (pd.DataFrame).
+        - target: The encoded target column (np.ndarray).
+
     """
 
     #encode target col & split into X, y
@@ -134,23 +137,22 @@ def categorical_model_pipeline(model, data, target_col):
 def sample_predictions(classifier, X):
     """
     Generates a random sample of predictions given a classifier with a
-    predict_proba method and input features X
+    predict_proba method and input features X.
 
     This function uses the predicted probabilities from the classifier to
     generate a sample of class predictions based on the probability
-    distribution
+    distribution.
 
-    Parameters:
-        classifier (object): A trained classifier that has a `predict_proba`
-            method
-        X (pd.DataFrame or np.ndarray): The input features for which to
-            generate predictions
+    :param classifier: A trained classifier that has a `predict_proba`
+        method (object).
+    :param X: The input features for which to generate predictions
+        (pd.DataFrame or np.ndarray).
 
-    Returns:
-        np.ndarray: An array of sampled predictions based on the predicted
-            probabilities
+    :return: An array of sampled predictions based on the predicted
+        probabilities (np.ndarray).
+
     """
-    
+
     pred_proba = classifier.predict_proba(X)
     sampled_predictions = np.array([
         np.random.choice(classifier.classes_, p=proba) for
@@ -221,22 +223,21 @@ def classifier_report(model, label_encoder, X_test, y_test):
 def xgb_hyperparam_optimizer(model, X, y):
     """
     Optimizes hyperparameters for an XGBoost model using a grouped parameter
-    grid and log loss as the evaluation metric
+    grid and log loss as the evaluation metric.
 
     This function performs hyperparameter optimization for the given XGBoost
     model by splitting the data into training and testing sets, then
     iteratively searching through predefined groups of hyperparameters to find
-    the combination that yields the best log loss on the test set
+    the combination that yields the best log loss on the test set.
 
-    Parameters:
-        model (sklearn.pipeline.Pipeline): A scikit-learn pipeline object that
-            includes an XGBoost classifier
-        X (pd.DataFrame or np.ndarray): The input features
-        y (pd.Series or np.ndarray): The target variable
+    :param model: A scikit-learn pipeline object that includes an XGBoost
+        classifier (sklearn.pipeline.Pipeline).
+    :param X: The input features (pd.DataFrame or np.ndarray).
+    :param y: The target variable (pd.Series or np.ndarray).
 
-    Returns:
-        dict: A dictionary containing the best hyperparameters found during the
-            optimization process.
+    :return: A dictionary containing the best hyperparameters found during the
+        optimization process (dict).
+
     """
 
     X_train, X_test, y_train, y_test = train_test_split(

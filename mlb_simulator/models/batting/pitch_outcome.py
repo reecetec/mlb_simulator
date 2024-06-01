@@ -18,24 +18,23 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 MODEL_NAME = 'pitch_outcome'
 
 def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
-    """Fit pitch outcome model for a given batter id
+    """
+    Fit pitch outcome model for a given batter id.
     
     This function will obtain the data required to fit the model, check if 
     hyperparameters have previously been optimized for the given batter id. 
-    If so, load them, otherwise, fit them and save them. Once ideal hyperparams
-    have been fit, fit the model to the dataset.
+    If so, load them, otherwise, fit them and save them. Once ideal 
+    hyperparameters have been fit, fit the model to the dataset.
 
-    Parameters:
-        batter_id (int): the desired batter's mlb id
-        backtest_date (str, optional): the date to be used if backtesting
+    :param batter_id: The desired batter's mlb id (int).
+    :param backtest_date: The date to be used if backtesting (str, optional).
 
-    Returns:
-        tuple: A tuple containing the following elements:
-            - model: The fitted model (sklearn.pipeline.Pipeline)
-            - le: The label encoder used for encoding target variable 
-                (sklearn.preprocessing.LabelEncoder)
-            - feature_order: A list containing the names of features in the
-                order they appear in the dataset (list[str])
+    :return: A tuple containing the following elements:
+        - model: The fitted model (sklearn.pipeline.Pipeline).
+        - le: The label encoder used for encoding target variable 
+            (sklearn.preprocessing.LabelEncoder).
+        - feature_order: A list containing the names of features in the
+            order they appear in the dataset (list[str]).
     """
 
     #get the dataset and target col

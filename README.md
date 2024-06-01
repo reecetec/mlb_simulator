@@ -4,6 +4,7 @@ MLB Game Simulator
 Simulate MLB matchup results
 
 Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/)
+ - not exhaustive as of now
 
 Todo:
  - create github workflow to automatically generate docs: https://pdoc.dev/docs/pdoc.html
