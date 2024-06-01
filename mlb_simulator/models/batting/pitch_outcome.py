@@ -3,13 +3,10 @@ this model determines the pitch outcome, meaning was the ball hit,
 strike, ball, foul, or hit into play?
 """
 from mlb_simulator.models import model_utils as mu
-from mlb_simulator.data.data_utils import get_models_location
 from mlb_simulator.features.build_features import get_pitch_outcome_data
 import json
-import os
 import xgboost as xgb
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -55,21 +52,17 @@ def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
             'finding and saving optimal hyperparams...'
         )
         hyperparams = mu.xgb_hyperparam_optimizer(model, X, y)
-        save_path = os.path.join(
-            get_models_location(),
-            MODEL_NAME,
-            f'{batter_id}-{datetime.now().strftime('%Y%m%d')}.json'
-        )
-        with open(save_path, 'w') as f:
-            json.dump(hyperparams, f)
+        mu.save_hyperparams(MODEL_NAME, batter_id, hyperparams)
+        
 
     # fit model for use
     model.set_params(**hyperparams)
     model.fit(X, y)
 
+    # return feature ordering
     feature_order = X.columns
 
-    return model, feature_order
+    return model, le, feature_order
 
 
     
@@ -83,10 +76,8 @@ def main():
     crowser = 681297
 
     batter_id = soto
-
-
-    m, f = fit_pitch_outcome_model(batter_id)
-    print(m, f)
+    model, le, feature_input_order = fit_pitch_outcome_model(batter_id)
+    print(model, le, feature_input_order)
 
 if __name__ == "__main__":
     main()

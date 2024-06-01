@@ -1,7 +1,14 @@
+"""
+This module includes functions to help with fitting models, saving models/
+model hyperparams, and evaluating models
+"""
+
+from mlb_simulator.data.data_utils import get_models_location
+
+import os
+import json
 import numpy as np
 import pandas as pd
-import os
-from mlb_simulator.data.data_utils import get_models_location
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
@@ -13,10 +20,16 @@ from datetime import datetime, timedelta
 
 
 def save_hyperparams(model_name, player_id, hyperparams: dict):
-    """Save hyperparams to correct folder
+    """Save hyperparams to a json file 
     """
 
-    model_folder = os.path.join(get_models_location(), model_name)
+    save_path = os.path.join(
+        get_models_location(),
+        model_name,
+        f'{player_id}-{datetime.now().strftime('%Y%m%d')}.json'
+    )
+    with open(save_path, 'w') as f:
+        json.dump(hyperparams, f)
 
 
 def check_for_hyperparams(model_name, player_id):
@@ -57,8 +70,12 @@ def categorical_model_pipeline(model, data, target_col):
     features = data.drop(columns=[target_col])
     target = le.fit_transform(data[target_col])
 
-    numeric_features = features.select_dtypes(include=['float64', 'int64']).columns
-    categorical_features = features.select_dtypes(include=['object']).columns
+    numeric_features = features.select_dtypes(
+        include=['float64', 'int64']
+    ).columns
+    categorical_features = features.select_dtypes(
+        include=['object']
+    ).columns
 
     preprocessor = ColumnTransformer(transformers=[
         ('num', StandardScaler(), numeric_features),
@@ -69,12 +86,6 @@ def categorical_model_pipeline(model, data, target_col):
         ('preprocessor', preprocessor),
         ('classifier', model())
     ])
-
-    # train the model
-    #model.fit(X_train, y_train)
-
-    #if split_data:
-    #    return deepcopy(model), deepcopy(le), X_train, X_test, y_train, y_test
 
     return deepcopy(model), deepcopy(le), features, target
 

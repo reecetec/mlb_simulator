@@ -1,14 +1,7 @@
-import sys
-import os
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
 from simulation.Player import Player
 
 from features.build_features import get_sequencing_dataset
 from features.build_features import get_pitches 
-from features.build_features import PITCH_CHARACTERISITCS
 
 from data.data_utils import query_mlb_db
 
