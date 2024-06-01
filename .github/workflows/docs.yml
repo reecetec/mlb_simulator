@@ -31,7 +31,7 @@ jobs:
       # We use a custom build script for pdoc itself, ideally you just run
       # `pdoc -o docs/ ...` here.
       #- run: python docs/make.py
-      - run: pdoc -o docs mlb_simulator
+      - run: pdoc -o docs mlb_simulator --force
 
       - uses: actions/upload-pages-artifact@v3
         with:
