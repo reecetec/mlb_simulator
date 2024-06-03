@@ -7,15 +7,14 @@ Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/
  - not exhaustive as of now
 
 Todo:
- - create github workflow to automatically generate docs: https://pdoc.dev/docs/pdoc.html
- - Remove need for SDV in pitch characteristic generation (extreme performance bottleneck)
-     - conditional copulas?  
- - Remove a lot of code from the simulation classes pertaining to model fitting and prediction, move these to /mlb_simulator/models
+ - Update doc string format to format seen in data_utils.py
+ - finish documenting functions in mlb_simulator/models/
+ - write improved pitch characteristic generation model - currently not conditioned on game state
+    - more balls will be thrown if count is 0-2 for ex, but not currently a factor
+ - re-implement classes for simulation cleanly and using better practices
  - Fix game state transition probabilities edge cases and add script to update this monthly
  - Implement simulation logic from notebook 7.0 in simulation class
- - Fix messy imports
- - Make use of special methods such as implementing __getitem__ to return a batter for a team
- - refactor all classes
+    - also refactor this
  - add logic to track simulation box scores
  - build dashboard to display games being played today, and allow user to run simulation for a desired game from the dash (and view results, box score)
      - try creating custom react component to display each game in desired format
