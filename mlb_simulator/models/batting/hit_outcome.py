@@ -5,7 +5,7 @@ launch speed?
 
 TODO: Introduce explanation of some variability though variables such as pitch
 speed, bat speed (would need new model to generate bat speed given the pitch,
-but data is new and was just introduced in 2024). Then, fit copulas on the 
+but data sparse as it was just introduced in 2024). Then, fit copulas on the 
 residual distribution.
 """
 
@@ -14,11 +14,7 @@ from mlb_simulator.features.build_features import get_hit_outcome_data
 import logging
 import numpy as np
 import pandas as pd
-from scipy.stats import gaussian_kde
-from scipy.interpolate import interp1d
-from collections import namedtuple
 import pyvinecopulib as pv
-
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -39,13 +35,13 @@ def fit_hit_outcome_model(batter_id: int, backtest_date=None):
 
     return cop
 
-
 def sample_copula(cop, df, n=1):
     """
     Given a fit copula and the data it was fit on, return a sampled value
     """
 
     u_sim = cop.simulate(n)
+    # map generated uniform distribution back to original scale
     df_scale_sim = np.asarray([np.quantile(df.values[:, i],
                                       u_sim[:, i])
                           for i in range(0, len(df.columns))])
@@ -53,7 +49,6 @@ def sample_copula(cop, df, n=1):
         return dict(zip(df.columns, df_scale_sim.flatten()))
     else:
         return pd.DataFrame(df_scale_sim.T, columns = df.columns).describe()
-
 
 if __name__ == '__main__':
     vladdy = 665489

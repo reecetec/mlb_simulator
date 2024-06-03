@@ -9,6 +9,7 @@ import os
 import json
 import numpy as np
 import pandas as pd
+import logging
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
@@ -17,6 +18,30 @@ from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.metrics import classification_report, log_loss
 from scipy.stats import chisquare 
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
+log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+
+def get_hyperparams(model_name, player_id, model, X, y):
+    # check if up to date hyperparams have been fit for this batter
+    hyperparam_path = check_for_hyperparams(model_name, player_id)
+
+    # if valid hyperparams, load them
+    if hyperparam_path:
+        with open(hyperparam_path) as f:
+            hyperparams = json.load(f)
+
+    # if no valid hyperparams, fit new ones and save them
+    else:
+        logger.info(
+            (f'No hyperparams found for {player_id}, {model_name}: '
+            'finding and saving optimal hyperparams...')
+        )
+        hyperparams = xgb_hyperparam_optimizer(model, X, y)
+        save_hyperparams(model_name, player_id, hyperparams)
+
+    return hyperparams 
 
 
 def save_hyperparams(model_name, player_id, hyperparams: dict):
@@ -54,6 +79,8 @@ def check_for_hyperparams(model_name, player_id):
     """
 
     model_folder = os.path.join(get_models_location(), model_name)
+    os.makedirs(model_folder, exist_ok=True)
+
     saved_params = os.listdir(model_folder)
 
     for file in saved_params:

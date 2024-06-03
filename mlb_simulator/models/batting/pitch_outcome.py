@@ -6,8 +6,6 @@ strike, ball, foul?
 
 from mlb_simulator.models import model_utils as mu
 from mlb_simulator.features.build_features import get_pitch_outcome_data
-
-import json
 import xgboost as xgb
 import logging
 
@@ -43,27 +41,10 @@ def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
 
     # get model pipeline 
     model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
-                                          dataset,
-                                          target_col
-                                          )
+                                                    dataset, target_col)
 
-    # check if up to date hyperparams have been fit for this batter
-    hyperparam_path = mu.check_for_hyperparams('pitch_outcome', batter_id)
-
-    # if valid hyperparams, load them
-    if hyperparam_path:
-        with open(hyperparam_path) as f:
-            hyperparams = json.load(f)
-
-    # if no valid hyperparams, fit new ones and save them
-    else:
-        logger.info(
-            f'No hyperparams found for {batter_id}, {MODEL_NAME}:\n' + \
-            'finding and saving optimal hyperparams...'
-        )
-        hyperparams = mu.xgb_hyperparam_optimizer(model, X, y)
-        mu.save_hyperparams(MODEL_NAME, batter_id, hyperparams)
-        
+    # get hyperparams
+    hyperparams = mu.get_hyperparams(MODEL_NAME, batter_id, model, X, y)
 
     # fit model for use
     model.set_params(**hyperparams)
