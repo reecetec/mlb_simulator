@@ -36,8 +36,10 @@ class GameStateTransitionMatrix:
 
     def __init__(self):
         self.name = 'GameStateTransitionMatrix'
+        self.t_matrix = None
 
-        # check if should be updated. Otherwise, use saved model.
+        # Try loading saved model. If model doesn't exist or is expired,
+        # fit/re-fit model
         try:
             self._load()
             logging.info(f'{self.name} loaded successfully')
@@ -46,25 +48,44 @@ class GameStateTransitionMatrix:
             self._fit()
             self._save()
 
+        if self.t_matrix is None:
+            raise Exception("Couldn't get transition probs")
+
+
     def __repr__(self):
         return f'GameStateTransitionMatrix'
+
 
     def __str__(self):
         return f'GameStateTransitionMatrx'
 
+
     def __call__(self, event: str, stand: str,
                  input_state: GameState) -> GameStateTransition:
         """
-        Sample game new game state given input state
+        Sample a state transition given input state
+
+        Take the event that occured in the game, the batters stand, the
+        current game state, and look up the transition distribution in the
+        self.t_matrix variable. Then use the distribution of outcomes to 
+        sample and return a transition
         """
 
+        if self.t_matrix is None:
+            raise Exception("Couldn't get transition probs")
+
         distribution = self.t_matrix.loc[(event, stand, input_state)]
-        sampled_event = choices(list(distribution.keys()),
-                                weights=distribution.values(),
-                                k=1)[0]
-        return sampled_event
+        sampled_transition = choices(list(distribution.keys()),
+                                     weights=distribution.values(),
+                                     k=1)[0]
+        return sampled_transition
+
 
     def _save(self):
+        """
+        Save the fit transition matrix to memory
+        """
+
         save_path = os.path.join(get_models_location(), self.name)
 
         os.makedirs(save_path, exist_ok=True)
@@ -74,7 +95,12 @@ class GameStateTransitionMatrix:
         with open(save_path, 'wb') as file:
             pickle.dump(self.t_matrix, file)
 
+
     def _load(self):
+        """
+        Try to load the transition matrix from memory
+        """
+
         load_folder = os.path.join(get_models_location(), self.name)
         
         for file in os.listdir(load_folder):
@@ -102,7 +128,7 @@ class GameStateTransitionMatrix:
 
     def _player_tracker(self, row):
         """
-        keep track of where players are before and after:
+        keep track of where players are before and after an event:
         map each id to their current position. Can then apply map
         to after state id's to recover the previous position of the runner
         """
@@ -122,6 +148,7 @@ class GameStateTransitionMatrix:
 
         return after_pos
 
+
     def _encode_states(self, row):
         """
         To add state before and state after columns to the dataframe
@@ -137,6 +164,7 @@ class GameStateTransitionMatrix:
                                           row['on_3b_after_prev_pos'],
                                           row['runs_scored'])
         return state_before, state_after
+
 
     def _counter_to_probs(self, counter):
         """
@@ -158,10 +186,7 @@ class GameStateTransitionMatrix:
         """
 
         logging.info('Loading data')
-        # query takes a while so save temp file
         df = get_game_state_t_prob_data()
-        #df.to_csv('temp_query.csv', index=False)
-        #df = pd.read_csv('temp_query.csv')
 
         logging.info('Transforming data')
         # look to next row to find after state. Fill with 3 outs and empty
@@ -231,10 +256,3 @@ if __name__ == '__main__':
 
     for i in range(10):
         print(t_matrix(event, stand, g_state))
-
-
-
-
-
-
-
