@@ -7,6 +7,10 @@ Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/
  - not exhaustive as of now
 
 Todo:
+ - lots of cleaning to do:
+ ```sh
+ make lint
+ ```
  - Update doc string format to format seen in data_utils.py
  - finish documenting functions in mlb_simulator/models/
  - write improved pitch characteristic generation model - currently not conditioned on game state
