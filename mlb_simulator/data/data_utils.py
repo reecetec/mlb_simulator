@@ -1,13 +1,14 @@
 # connects to SQL database from data/raw and provides functions to query data
 import pathlib
-from sqlalchemy import create_engine, engine 
+from sqlalchemy import create_engine, engine
 import pandas as pd
 import os
 import pathlib
 import subprocess
 
+
 def get_db_location() -> str:
-    """Gets path for mlb.db database 
+    """Gets path for mlb.db database
 
     Default location is set to ~/sports/mlb_simulator/data/databases/mlb.db
 
@@ -18,7 +19,8 @@ def get_db_location() -> str:
     home_dir = pathlib.Path.home()
     db_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
                            'databases', 'mlb.db')
-    return db_path 
+    return db_path
+
 
 def get_models_location() -> str:
     """Gets path for models folder
@@ -32,8 +34,9 @@ def get_models_location() -> str:
 
     return path
 
+
 def get_mlb_db_engine() -> engine.Engine:
-    """Get a sqlalchemy engine for the mlb.db 
+    """Get a sqlalchemy engine for the mlb.db
 
     Returns:
         engine: sqlalchemy engine connected to the master db
@@ -47,10 +50,11 @@ def get_mlb_db_engine() -> engine.Engine:
         raise
     return engine
 
+
 def query_mlb_db(query_str) -> pd.DataFrame:
     """Function to query the mlb database
 
-    Using get_mlb_db_engine(), obtains an engine 
+    Using get_mlb_db_engine(), obtains an engine
 
     Args:
         query_str (str): the query to send to the mlb database
@@ -67,6 +71,7 @@ def query_mlb_db(query_str) -> pd.DataFrame:
         raise
     return df
 
+
 def git_pull(repo_path) -> None:
     """Function to pull a git repo
 
@@ -80,6 +85,7 @@ def git_pull(repo_path) -> None:
     except subprocess.CalledProcessError as e:
         print(f"Error pulling repository: {e}")
         raise
+
 
 def git_clone(repo_url, save_path):
     """Function to clone a git repo
@@ -95,6 +101,3 @@ def git_clone(repo_url, save_path):
     except subprocess.CalledProcessError as e:
         print(f"Error cloning repository: {e}")
         raise
-
-
-

@@ -7,6 +7,7 @@ Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/
  - not exhaustive as of now
 
 Todo:
+ - Make mlb_simulator/models/ all classes: All of them implement fit and pred
  - lots of cleaning to do:
  ```sh
  make lint

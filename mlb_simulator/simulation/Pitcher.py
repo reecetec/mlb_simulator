@@ -1,7 +1,10 @@
+from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.metadata import SingleTableMetadata
+import warnings
 from simulation.Player import Player
 
 from features.build_features import get_sequencing_dataset
-from features.build_features import get_pitches 
+from features.build_features import get_pitches
 
 from data.data_utils import query_mlb_db
 
@@ -17,13 +20,10 @@ logging.getLogger('copulas').setLevel(logging.CRITICAL)
 logging.getLogger('sdv.data_processing').setLevel(logging.CRITICAL)
 logging.getLogger('rdt.transformers').setLevel(logging.CRITICAL)
 logging.getLogger('sdv').propagate = False
-import warnings
 warnings.filterwarnings("ignore",
                         category=UserWarning,
                         module="sdv.single_table.base")
 
-from sdv.metadata import SingleTableMetadata
-from sdv.single_table import GaussianCopulaSynthesizer
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -34,19 +34,19 @@ class Pitcher(Player):
     def __init__(self, mlb_id=None, rotowire_id=None, backtest_date=''):
         super().__init__(mlb_id, rotowire_id, backtest_date)
         logger.info(f'Starting init for {self.name}')
-        #basic...
-        self.throws = query_mlb_db(f'''select p_throws from Statcast where 
-                                   pitcher={self.mlb_id} and p_throws 
+        # basic...
+        self.throws = query_mlb_db(f'''select p_throws from Statcast where
+                                   pitcher={self.mlb_id} and p_throws
                                    is not null limit 1''')['p_throws'][0]
         self.cumulative_pitch_number = 0
         self.prev_pitch = None
 
-        #fit models
-        self.pitch_characteristic_generators = {'L':{},
-                                                'R':{} }
+        # fit models
+        self.pitch_characteristic_generators = {'L': {},
+                                                'R': {}}
         self.fit_pitch_sequencer()
         self.fit_pitch_characteristic_generator()
-        logger.info(f'''{self.name} throws {self.throws} with 
+        logger.info(f'''{self.name} throws {self.throws} with
                     arsenal {self.pitch_arsenal}''')
         logger.info(f'Init complete for {self.name}')
 
@@ -67,33 +67,35 @@ class Pitcher(Player):
                     continue
                 metadata = SingleTableMetadata()
                 metadata.detect_from_dataframe(df)
-                synthesizer = GaussianCopulaSynthesizer(metadata,
-                                        enforce_rounding=True,
-                                        enforce_min_max_values=True,
-                                        default_distribution='gaussian_kde',
-                                        )
+                synthesizer = GaussianCopulaSynthesizer(
+                    metadata,
+                    enforce_rounding=True,
+                    enforce_min_max_values=True,
+                    default_distribution='gaussian_kde',
+                )
                 synthesizer.fit(df)
                 self.pitch_characteristic_generators[
-                        batter_stands][pitch_type] = deepcopy(synthesizer)
+                    batter_stands][pitch_type] = deepcopy(synthesizer)
 
     def fit_pitch_sequencer(self):
         X, y, encoders, pitch_arsenal = (
-                get_sequencing_dataset(self.mlb_id,self.backtest_date)
-            )
+            get_sequencing_dataset(self.mlb_id, self.backtest_date)
+        )
         self.pitch_arsenal = pitch_arsenal
         params = {
-            'objective' : 'multi:softprob',
-            'eval_metric': 'mlogloss',      
+            'objective': 'multi:softprob',
+            'eval_metric': 'mlogloss',
             'learning_rate': 0.01,
-            'max_depth': 2, 
-            'n_estimators': 500 
-         }
+            'max_depth': 2,
+            'n_estimators': 500
+        }
         self.pitch_sequencer = xgb.XGBClassifier(**params)
         self.pitch_sequencer.fit(X, y)
         self.pitch_sequencer_encoders = encoders
         self.pitch_sequencer_vars = self.pitch_sequencer.get_booster().feature_names
 
-    def generate_pitch_characteristics(self, pitch_type, batter_stats, game_state):
+    def generate_pitch_characteristics(
+            self, pitch_type, batter_stats, game_state):
         cur_data = pd.DataFrame(data=[{
             'strikes': game_state['strikes'],
             'balls': game_state['balls'],
@@ -102,8 +104,7 @@ class Pitcher(Player):
         }])
 
         synthetic_pitch = self.pitch_characteristic_generators[batter_stats['stand']][pitch_type].sample_remaining_columns(
-            known_columns = cur_data
-        )
+            known_columns=cur_data)
         return dict(synthetic_pitch[PITCH_CHARACTERISITCS].iloc[0])
 
     def generate_pitch_type(self, game_state, pitcher_stats, batter_stats):
@@ -111,27 +112,31 @@ class Pitcher(Player):
         combined_data = {**game_state, **pitcher_stats, **batter_stats}
         df = pd.DataFrame([combined_data])
 
-        #encode cols:
+        # encode cols:
         for col in df.columns:
             if col in self.pitch_sequencer_encoders.keys():
                 df[col] = self.pitch_sequencer_encoders[col].transform(df[col])
 
-        #add in rare pitch columns (standardized, so 0 is average)
+        # add in rare pitch columns (standardized, so 0 is average)
         for col in self.pitch_sequencer_vars:
             if col not in df.columns and ('_woba' in col or '_strike' in col):
                 df[col] = [0]
-        #ensure ordering kept the same as when fit
+        # ensure ordering kept the same as when fit
         df = df[self.pitch_sequencer_vars]
 
         pitch_distribution = self.pitch_sequencer.predict_proba(df)[0]
-        pitch_choice_encoded = np.random.choice(len(pitch_distribution), size=1, p=pitch_distribution)
-        pitch_choice = self.pitch_sequencer_encoders['pitch_type'].inverse_transform(pitch_choice_encoded)[0]
+        pitch_choice_encoded = np.random.choice(
+            len(pitch_distribution), size=1, p=pitch_distribution)
+        pitch_choice = self.pitch_sequencer_encoders['pitch_type'].inverse_transform(
+            pitch_choice_encoded)[0]
 
         return pitch_choice
 
     def generate_pitch(self, game_state, batter_stats, pitcher_stats):
-        pitch_type = self.generate_pitch_type(game_state, batter_stats, pitcher_stats)
-        pitch_characteristics = self.generate_pitch_characteristics(pitch_type, batter_stats, game_state)
+        pitch_type = self.generate_pitch_type(
+            game_state, batter_stats, pitcher_stats)
+        pitch_characteristics = self.generate_pitch_characteristics(
+            pitch_type, batter_stats, game_state)
 
         return pitch_type, pitch_characteristics
 
@@ -174,8 +179,9 @@ if __name__ == '__main__':
         'sz_bot': 1.544,
         'stand': 'R',
     }
-        
-    #print(pitcher.generate_pitch_type(game_state, pitcher_stats, batter_stats))
-    pitch, pitch_char = pitcher.generate_pitch(game_state, batter_stats, pitcher_stats)
+
+    # print(pitcher.generate_pitch_type(game_state, pitcher_stats, batter_stats))
+    pitch, pitch_char = pitcher.generate_pitch(
+        game_state, batter_stats, pitcher_stats)
     print(pitch)
     print(pitch_char)

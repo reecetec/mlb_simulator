@@ -1,4 +1,4 @@
-""" 
+"""
 Module for the pitch outcome model. This model determines the pitch outcome,
 meaning it answers the following question: was the ball hit, was there a
 strike, ball, foul?
@@ -15,31 +15,33 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 MODEL_NAME = 'pitch_outcome'
 
+
 def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
     """
     Fit pitch outcome model for a given batter id.
-    
-    This function will obtain the data required to fit the model, check if 
-    hyperparameters have previously been optimized for the given batter id. 
-    If so, load them, otherwise, fit them and save them. Once ideal 
+
+    This function will obtain the data required to fit the model, check if
+    hyperparameters have previously been optimized for the given batter id.
+    If so, load them, otherwise, fit them and save them. Once ideal
     hyperparameters have been fit, fit the model to the dataset.
 
-    :param batter_id: The desired batter's mlb id (int).
-    :param backtest_date: The date to be used if backtesting (str, optional).
+    Args:
+        batter_id (int): The desired batter's mlb id.
+        backtest_date (str, optional): The date to be used if backtesting 
 
-    :return: A tuple containing the following elements:
-        - model: The fitted model (sklearn.pipeline.Pipeline).
-        - le: The label encoder used for encoding target variable 
-            (sklearn.preprocessing.LabelEncoder).
-        - feature_order: A list containing the names of features in the
-            order they appear in the dataset (list[str]).
+    Returns: 
+        model: The fitted model (sklearn.pipeline.Pipeline).
+        le: (sklearn.preprocessing.LabelEncoder) The label encoder used for
+            encoding target variable.
+        feature_order: (list[str]) A list containing the names of features in
+            the order they appear in the dataset.
     """
 
-    #get the dataset and target col
+    # get the dataset and target col
     dataset, target_col = get_pitch_outcome_data(batter_id,
                                                  backtest_date=backtest_date)
 
-    # get model pipeline 
+    # get model pipeline
     model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
                                                     dataset, target_col)
 
@@ -56,7 +58,6 @@ def fit_pitch_outcome_model(batter_id: int, backtest_date=None):
     return model, le, feature_order
 
 
-    
 def main():
 
     vladdy = 665489
@@ -69,6 +70,7 @@ def main():
     batter_id = soto
     model, le, feature_input_order = fit_pitch_outcome_model(batter_id)
     print(model, le, feature_input_order)
+
 
 if __name__ == "__main__":
     main()
