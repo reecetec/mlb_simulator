@@ -20,8 +20,8 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Switch to Current Branch
-        run: git checkout ${{ github.ref_name }}
+          # - name: Switch to Current Branch
+          # run: git checkout ${{ github.ref_name }}
               
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
