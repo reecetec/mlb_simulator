@@ -1,9 +1,4 @@
-import sys
-import os
 import logging
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
 from datetime import timedelta, datetime
 import statsapi
 from copy import deepcopy
@@ -11,12 +6,11 @@ import xgboost as xgb
 import pandas as pd
 import numpy as np
 import pickle
-from pprint import pprint
 from itertools import product
 
-from simulation.Team import Team
-from simulation.State import State
-from features.build_features import get_hit_classification_dataset
+from mlb_simulator.simulation.Team import Team
+from mlb_simulator.simulation.State import State
+from mlb_simulator.features.build_features import get_hit_classification_data
 
 logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -32,7 +26,9 @@ class Game:
         #find game venue
         self.venue_id, self.venue_name = self.get_venue()
 
-        logger.info(f'Running init for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}')
+        logger.info(f'''Running init for:
+                    {self.away_team.name} @ {self.home_team.name}
+                    starting at {self.time} in {self.venue_name}''')
 
         #load hit classification model
         logger.info(f'Fitting hit classification model for {self.venue_name}')
@@ -52,7 +48,9 @@ class Game:
         logger.info('Initializing Game State')
         self.game_state = State()
 
-        logger.info(f'Init complete for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}')
+        logger.info(f'''Init complete for:
+                    {self.away_team.name} @ {self.home_team.name}
+                    starting at {self.time} in {self.venue_name}''')
 
 
     def simulate_game(self):

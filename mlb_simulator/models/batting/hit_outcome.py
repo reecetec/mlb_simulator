@@ -20,35 +20,46 @@ logger = logging.getLogger(__name__)
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
 
-MODEL_NAME = 'hit_outcome'
 
-def fit_hit_outcome_model(batter_id: int, backtest_date=None):
-    
-    # get hit data
-    hits = get_hit_outcome_data(batter_id, backtest_date=backtest_date)
-    targets = hits.columns
+class HitOutcome:
 
-    u = pv.to_pseudo_obs(hits)
+    def __init__(self, batter_id):
+        self.MODEL_NAME = 'hit_outcome'
+        self.batter_id = batter_id
 
-    cop = pv.Vinecop(d=len(targets))
-    cop.select(data=u)
+    def fit(self, backtest_date=None):
+        
+        # get hit data
+        self.hits = get_hit_outcome_data(self.batter_id,
+                                    backtest_date=backtest_date)
+        targets = self.hits.columns
+        u = pv.to_pseudo_obs(self.hits)
+        cop = pv.Vinecop(d=len(targets))
+        cop.select(data=u)
+        self.copula = cop
+        return cop
 
-    return cop
 
-def sample_copula(cop, df, n=1):
-    """
-    Given a fit copula and the data it was fit on, return a sampled value
-    """
+    def __call__(self, n=1):
+        """
+        Given the fit copula and the data it was fit on, return a sampled value
+        """
+        
+        if not hasattr(self, 'copula'):
+            print('Trying to use model without first fitting')
+            return None
 
-    u_sim = cop.simulate(n)
-    # map generated uniform distribution back to original scale
-    df_scale_sim = np.asarray([np.quantile(df.values[:, i],
-                                      u_sim[:, i])
-                          for i in range(0, len(df.columns))])
-    if n == 1:
-        return dict(zip(df.columns, df_scale_sim.flatten()))
-    else:
-        return pd.DataFrame(df_scale_sim.T, columns = df.columns).describe()
+        u_sim = self.copula.simulate(n)
+        # map generated uniform distribution back to original scale
+        df_scale_sim = np.asarray([np.quantile(self.hits.values[:, i],
+                                          u_sim[:, i])
+                              for i in range(0, len(self.hits.columns))])
+        if n == 1:
+            return dict(zip(self.hits.columns, df_scale_sim.flatten()))
+        else:
+            return pd.DataFrame(df_scale_sim.T,
+                                columns = self.hits.columns).describe()
+
 
 if __name__ == '__main__':
     vladdy = 665489
@@ -60,12 +71,11 @@ if __name__ == '__main__':
 
     batter_id = soto
 
-    cop1 = fit_hit_outcome_model(batter_id)
-    cop2 = fit_hit_outcome_model(schneider)
-    print(sample_copula(cop1, get_hit_outcome_data(batter_id)))
-    print(sample_copula(cop2, get_hit_outcome_data(schneider)))
+    hit_gen = HitOutcome(batter_id)
+    hit_gen.fit()
 
-    
+    for i in range(3):
+        print(hit_gen())
 
     
 

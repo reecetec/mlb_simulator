@@ -16,6 +16,8 @@ from collections import namedtuple, Counter
 from random import choices
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
+
 logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,9 +44,9 @@ class GameStateTransitionMatrix:
         # fit/re-fit model
         try:
             self._load()
-            logging.info(f'{self.name} loaded successfully')
+            logger.info(f'{self.name} loaded successfully')
         except:
-            logging.info(f'Refitting {self.name}')
+            logger.info(f'Refitting {self.name}')
             self._fit()
             self._save()
 
@@ -185,10 +187,10 @@ class GameStateTransitionMatrix:
         named tuple. Finally, 
         """
 
-        logging.info('Loading data')
+        logger.info('Loading data')
         df = get_game_state_t_prob_data()
 
-        logging.info('Transforming data')
+        logger.info('Transforming data')
         # look to next row to find after state. Fill with 3 outs and empty
         # bases if inning changed
         df['outs_after'] = df.groupby(
@@ -217,7 +219,7 @@ class GameStateTransitionMatrix:
             df[f'on_{base}b'] = df[f'on_{base}b'].notnull().astype(bool)
 
 
-        logging.info('Getting transition probabilities')
+        logger.info('Getting transition probabilities')
         # encode game states and transitions:
         df['GameState'], df['GameStateTransition'] = zip(
             *df.apply(self._encode_states, axis=1)

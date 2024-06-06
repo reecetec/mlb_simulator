@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from mlb_simulator.models.game.game_state_transition_probs import GameState
+from mlb_simulator.models.game.game_state_transition_probs import GameStateTransition
+
 class State:
     def __init__(self, outs=0, strikes=0, balls=0, inning=1, inning_is_top=True,
                  on_1b=None, on_2b=None, on_3b=None,
@@ -44,11 +47,6 @@ class State:
             'on_3b': 1 if self.bases['3b'] else 0
         }
     
-    def pprint_bases(self):
-        for key in self.game_state.bases:
-            player = self.game_state.bases[key]
-            print(f'{key}: {player.name if player is not None else None}')
-
     def encode_cur_state(self):
         return (self.outs, tuple(self.bases[base] is not None for base in ['1b', '2b', '3b']))
 
