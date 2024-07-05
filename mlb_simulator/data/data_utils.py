@@ -3,7 +3,6 @@ import pathlib
 from sqlalchemy import create_engine, engine
 import pandas as pd
 import os
-import pathlib
 import subprocess
 
 
