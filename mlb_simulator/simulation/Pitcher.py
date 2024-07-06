@@ -28,22 +28,22 @@ class Pitcher(Player):
         self.cumulative_pitch_number = 0
         self.prev_pitch = None
 
-        #instantiate models:
+        #instantiate and fit models:
         self.sequencer = PitchSequencer(self.mlb_id)
         self.char_generator = PitchCharacteristics(self.mlb_id)
-        self.is_ready = False
-
+        self.sequencer.fit()
+        self.char_generator.fit(self.sequencer.pitch_arsenal)
 
     def __repr__(self):
         return f'Pitcher(mlb_id={self.mlb_id}, rotowire_id={self.rotowire_id})'
 
+    
+    def __str__(self):
+        return f'{self.name}'
+
 
     def __call__(self, game_state, batter_stats):
         """Generate pitch characteristics"""
-
-        if not self.is_ready:
-            logger.critical('Need to fit models before generating pitch')
-            exit()
 
         features = pd.DataFrame({**game_state, **batter_stats})
         stand = batter_stats['stand'][0]
@@ -52,15 +52,6 @@ class Pitcher(Player):
         pitch_chars = self.char_generator(stand, pitch_type)
 
         return pitch_chars
-
-
-    def fit(self):
-        """Fit the pitch sequencer and characteristics generator"""
-
-        self.sequencer.fit()
-        self.char_generator.fit(self.sequencer.pitch_arsenal)
-        self.is_ready = True
-
 
 
         
@@ -78,7 +69,6 @@ if __name__=='__main__':
 
     for pitcher in pitchers:
         print(pitcher)
-        pitcher.fit()
         pitch = pitcher(game_state, batter_stats)
         print(pitch)
 

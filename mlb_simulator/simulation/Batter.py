@@ -27,10 +27,11 @@ class Batter(Player):
 
         self._get_stats()
 
-        #instantiate models
+        #instantiate and fit models
         self.pitch_outcome = PitchOutcome(self.mlb_id)
         self.hit_outcome = HitOutcome(self.mlb_id)
-        self.is_ready = False
+        self.pitch_outcome.fit()
+        self.hit_outcome.fit()
 
 
     def __repr__(self):
@@ -39,10 +40,6 @@ class Batter(Player):
 
     def __call__(self, game_state, pitch_chars):
         """Generate hit outcome given a pitch"""
-
-        if not self.is_ready:
-            logger.critical('Need to fit models before generating hit outcome')
-            exit()
 
         features = pd.DataFrame({**game_state, **pitch_chars})
 
@@ -54,14 +51,6 @@ class Batter(Player):
 
         return Batter.Hit(pitch_outcome, None)
 
-
-    def fit(self):
-        """Fit the hit outcome and pitch outcome models"""
-
-        self.pitch_outcome.fit()
-        self.hit_outcome.fit()
-        self.is_ready = True
-       
 
     def _get_stats(self):
         self.stand = query_mlb_db(f'''
@@ -124,7 +113,6 @@ if __name__=='__main__':
 
     for batter in batters:
         print(batter)
-        batter.fit()
         for i in range(15):
             hit = batter(game_state, pitch_characteristics)
             if hit.hit_outcome is not None:
