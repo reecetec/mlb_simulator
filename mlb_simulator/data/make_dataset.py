@@ -1,6 +1,4 @@
 import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-
 import time
 from tqdm import tqdm
 import logging
@@ -14,8 +12,6 @@ from sqlalchemy import inspect, text
 import pandas as pd
 from datetime import datetime, timedelta
 import re
-import pathlib
-import requests
 from pybaseball import statcast
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -23,6 +19,7 @@ from scipy.stats import zscore
 from mlb_simulator.data.data_utils import get_mlb_db_engine, query_mlb_db
 from mlb_simulator.data.data_utils import get_db_location, git_clone, git_pull
 
+warnings.filterwarnings("ignore", category=FutureWarning)
 logger = logging.getLogger(__name__)
 
 DB_LOCATION = get_db_location()
@@ -248,10 +245,10 @@ def update_chadwick_repo():
                                   'data', 'raw', 'chadwick')
     
     if os.path.exists(repo_save_path):
-        git_pull(repo_save_path, logger)
+        git_pull(repo_save_path)
     else:
         repo_url = 'https://github.com/chadwickbureau/register.git'
-        git_clone(repo_url, repo_save_path, logger)
+        git_clone(repo_url, repo_save_path)
 
 def update_player_name_map(save_path):
 

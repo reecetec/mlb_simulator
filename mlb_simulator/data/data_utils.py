@@ -21,6 +21,21 @@ def get_db_location() -> str:
     return db_path
 
 
+def get_team_id_map_location() -> str:
+    """Gets path for team_id_map.csv
+
+    Default location is set to ~/sports/mlb_simulator/data/raw/team_id_map.csv
+
+    Returns:
+        str: file path
+    """
+
+    home_dir = pathlib.Path.home()
+    db_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
+                           'raw', 'team_id_map.csv')
+    return db_path
+
+
 def get_models_location() -> str:
     """Gets path for models folder
 
@@ -100,3 +115,4 @@ def git_clone(repo_url, save_path):
     except subprocess.CalledProcessError as e:
         print(f"Error cloning repository: {e}")
         raise
+
