@@ -234,7 +234,7 @@ def categorical_chisquare(model, label_encoder, X_test, y_test):
             "The distributions are not significantly different "
             "(fail to reject the null hypothesis)."
             )
-    print(pd.DataFrame(hyp_tests, columns=['test_results']).value_counts())
+    #print(pd.DataFrame(hyp_tests, columns=['test_results']).value_counts())
 
 
 def classifier_report(model, label_encoder, X_test, y_test):
@@ -246,6 +246,49 @@ def classifier_report(model, label_encoder, X_test, y_test):
     print('Log Loss:', log_loss(y_test, y_prob))
 
     categorical_chisquare(model, label_encoder, X_test, y_test)
+
+
+def balance_classes(X_train, X_test, y_train, y_test):
+    """Hit by pitch is a rare class. So, for batters with lower sample size,
+    occasionally there does not exist an occurence of this class within either
+    the test or training set. This method ensures there exists an instance of 
+    each class in the training and test set. Of course not ideal, and this
+    is an area which can be drastically improved upon.
+    """
+
+    col_names = X_train.columns 
+
+    unique_train_classes = np.unique(y_train)
+    unique_test_classes = np.unique(y_test)
+
+    missing_in_train = np.setdiff1d(unique_test_classes,
+                                    unique_train_classes)
+    missing_in_test = np.setdiff1d(unique_train_classes,
+                                   unique_test_classes)
+
+    # Add missing classes to the train set
+    for missing_class in missing_in_train:
+        X_train = np.vstack([X_train,
+                             X_test.iloc[
+                                 [np.where(y_test == missing_class)[0][0]]]
+                             ])
+        X_train = pd.DataFrame(X_train, columns = col_names)
+        y_train = np.append(y_train, missing_class)
+
+    # Add missing classes to the test set
+    for missing_class in missing_in_test:
+        X_test = np.vstack([X_test,
+                            X_train.iloc[
+                                [np.where(y_train == missing_class)[0][0]]]
+                            ])
+        X_test = pd.DataFrame(X_test, columns = col_names)
+        y_test = np.append(y_test, missing_class)
+
+    print(X_train.head())
+    print(X_test.head())
+
+    return X_train, X_test, y_train, y_test
+
 
 def xgb_hyperparam_optimizer(model, X, y):
     """
@@ -267,8 +310,9 @@ def xgb_hyperparam_optimizer(model, X, y):
 
     """
 
-    X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.20, shuffle=False)
+    # get balanced train, test set
+    split_data = train_test_split(X, y, test_size=0.20, shuffle=False)
+    X_train, X_test, y_train, y_test = balance_classes(*split_data)
 
     grouped_param_grid = [
         {
