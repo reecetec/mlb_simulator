@@ -11,24 +11,24 @@ import xgboost as xgb
 import pandas as pd
 from random import choices
 
+
 class PitchSequencer:
 
     def __init__(self, pitcher_id):
 
-        self.MODEL_NAME = 'pitch_sequencer'
+        self.MODEL_NAME = "pitch_sequencer"
         self.pitcher_id = pitcher_id
 
     def __repr__(self):
-        return f'PitchSequencer({self.pitcher_id})'
-
+        return f"PitchSequencer({self.pitcher_id})"
 
     def __call__(self, features):
         """
         Generate a pitch outcome given the features and the fit model
         """
 
-        if not hasattr(self, 'model'):
-            print('Trying to use model without first fitting')
+        if not hasattr(self, "model"):
+            print("Trying to use model without first fitting")
             return None
 
         probs = self.model.predict_proba(features[self.feature_order])[0]
@@ -40,18 +40,20 @@ class PitchSequencer:
         else:
             return None
 
-
     def fit(self, backtest_date=None):
 
-        query = get_pitch_sequencing_data(self.pitcher_id,
-                                          backtest_date=backtest_date)
+        query = get_pitch_sequencing_data(
+            self.pitcher_id, backtest_date=backtest_date
+        )
         dataset, target_col, pitch_arsenal = query
 
-        model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
-                                                        dataset, target_col)
+        model, le, X, y = mu.categorical_model_pipeline(
+            xgb.XGBClassifier, dataset, target_col
+        )
 
-        hyperparams = mu.get_hyperparams(self.MODEL_NAME, self.pitcher_id,
-                                         model, X, y)
+        hyperparams = mu.get_hyperparams(
+            self.MODEL_NAME, self.pitcher_id, model, X, y
+        )
 
         model.set_params(**hyperparams)
         model.fit(X, y)
@@ -69,26 +71,39 @@ class PitchSequencer:
 if __name__ == "__main__":
     kukuchi = 579328
     gil = 661563
-    pitcher_id = gil 
+    pitcher_id = gil
 
     pitch_seq = PitchSequencer(pitcher_id)
     pitch_seq.fit()
 
-    #print(pitch_seq.feature_order)
+    # print(pitch_seq.feature_order)
 
-
-    input_f = pd.DataFrame([{'game_year': 2024, 'pitch_number':1, 'strikes':0, 'balls':0,
-               'outs_when_up':0, 'stand': 'R', 'on_1b': False, 'on_2b': False,
-               'on_3b': False, 'prev_pitch': None, 'cumulative_pitch_number': 1,
-               'FF_strike':0, 'CH_strike':0, 'SL_strike':0,
-               'FC_strike':0, 'FF_woba':5, 'CH_woba':0, 'SL_woba':0, 'FC_woba':0}])
+    input_f = pd.DataFrame(
+        [
+            {
+                "game_year": 2024,
+                "pitch_number": 1,
+                "strikes": 0,
+                "balls": 0,
+                "outs_when_up": 0,
+                "stand": "R",
+                "on_1b": False,
+                "on_2b": False,
+                "on_3b": False,
+                "prev_pitch": None,
+                "cumulative_pitch_number": 1,
+                "FF_strike": 0,
+                "CH_strike": 0,
+                "SL_strike": 0,
+                "FC_strike": 0,
+                "FF_woba": 5,
+                "CH_woba": 0,
+                "SL_woba": 0,
+                "FC_woba": 0,
+            }
+        ]
+    )
 
     model, le, feature_order, pitch_arsenal = pitch_seq.fit()
 
     print(pitch_seq(input_f))
-    
-
-
-    
-                                                               
-

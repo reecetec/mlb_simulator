@@ -16,8 +16,9 @@ def get_db_location() -> str:
     """
 
     home_dir = pathlib.Path.home()
-    db_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
-                           'databases', 'mlb.db')
+    db_path = os.path.join(
+        home_dir, "sports", "mlb_simulator", "data", "databases", "mlb.db"
+    )
     return db_path
 
 
@@ -31,8 +32,9 @@ def get_team_id_map_location() -> str:
     """
 
     home_dir = pathlib.Path.home()
-    db_path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'data',
-                           'raw', 'team_id_map.csv')
+    db_path = os.path.join(
+        home_dir, "sports", "mlb_simulator", "data", "raw", "team_id_map.csv"
+    )
     return db_path
 
 
@@ -44,7 +46,7 @@ def get_models_location() -> str:
     """
 
     home_dir = pathlib.Path.home()
-    path = os.path.join(home_dir, 'sports', 'mlb_simulator', 'models')
+    path = os.path.join(home_dir, "sports", "mlb_simulator", "models")
 
     return path
 
@@ -58,9 +60,9 @@ def get_mlb_db_engine() -> engine.Engine:
 
     try:
         db_path = get_db_location()
-        engine = create_engine(f'sqlite:///{db_path}', echo=False)
+        engine = create_engine(f"sqlite:///{db_path}", echo=False)
     except Exception as e:
-        print(f'Error creating engine: {e}')
+        print(f"Error creating engine: {e}")
         raise
     return engine
 
@@ -94,7 +96,7 @@ def git_pull(repo_path) -> None:
     """
 
     try:
-        subprocess.run(['git', 'pull'], cwd=repo_path, check=True)
+        subprocess.run(["git", "pull"], cwd=repo_path, check=True)
         print(f"{repo_path} sucessfully pulled")
     except subprocess.CalledProcessError as e:
         print(f"Error pulling repository: {e}")
@@ -110,9 +112,8 @@ def git_clone(repo_url, save_path):
     """
 
     try:
-        subprocess.run(['git', 'clone', repo_url, save_path], check=True)
+        subprocess.run(["git", "clone", repo_url, save_path], check=True)
         print(f"{repo_url} successfully cloned to {save_path}")
     except subprocess.CalledProcessError as e:
         print(f"Error cloning repository: {e}")
         raise
-

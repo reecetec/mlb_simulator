@@ -13,24 +13,26 @@ import pandas as pd
 from random import choices
 
 logger = logging.getLogger(__name__)
-log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 
 class PitchOutcome:
 
-    def __init__(self, batter_id):
+    def __init__(self, batter_id=None):
 
-        self.MODEL_NAME = 'pitch_outcome'
+        self.MODEL_NAME = "pitch_outcome"
         self.batter_id = batter_id
+
+        # if batter id is none, fit default model.
 
     def __call__(self, features):
         """
         Generate a pitch outcome given the features and the fit model
         """
 
-        if not hasattr(self, 'model'):
-            print('Trying to use model without first fitting')
+        if not hasattr(self, "model"):
+            print("Trying to use model without first fitting")
             return None
 
         probs = self.model.predict_proba(features[self.feature_order])[0]
@@ -40,6 +42,7 @@ class PitchOutcome:
         if outcome is not None:
             return outcome[0]
         else:
+            print("error, pitch outcome model returns none")
             return None
 
     def fit(self, backtest_date=None):
@@ -52,9 +55,9 @@ class PitchOutcome:
         hyperparameters have been fit, fit the model to the dataset.
 
         Args:
-            backtest_date (str, optional): The date to be used if backtesting 
+            backtest_date (str, optional): The date to be used if backtesting
 
-        Returns: 
+        Returns:
             model: The fitted model (sklearn.pipeline.Pipeline).
             le: (sklearn.preprocessing.LabelEncoder) The label encoder used for
                 encoding target variable.
@@ -63,16 +66,15 @@ class PitchOutcome:
         """
 
         # get the dataset and target col
-        dataset, target_col = get_pitch_outcome_data(self.batter_id,
-                                                     backtest_date)
+        dataset, target_col = get_pitch_outcome_data(self.batter_id, backtest_date)
 
         # get model pipeline
-        model, le, X, y = mu.categorical_model_pipeline(xgb.XGBClassifier,
-                                                        dataset, target_col)
+        model, le, X, y = mu.categorical_model_pipeline(
+            xgb.XGBClassifier, dataset, target_col
+        )
 
         # get hyperparams
-        hyperparams = mu.get_hyperparams(self.MODEL_NAME,
-                                         self.batter_id, model, X, y)
+        hyperparams = mu.get_hyperparams(self.MODEL_NAME, self.batter_id, model, X, y)
 
         # fit model for use
         model.set_params(**hyperparams)
@@ -102,13 +104,13 @@ def main():
     pitch_out.fit()
 
     pitch_chars = {
-        'release_speed': 95,
-        'release_spin_rate': 2000,
-        'plate_x': 0,
-        'plate_z': 2,
-        'p_throws': 'R',
-        'strikes': 0,
-        'balls': 0
+        "release_speed": 95,
+        "release_spin_rate": 2000,
+        "plate_x": 0,
+        "plate_z": 2,
+        "p_throws": "R",
+        "strikes": 0,
+        "balls": 0,
     }
 
     for _ in range(10):

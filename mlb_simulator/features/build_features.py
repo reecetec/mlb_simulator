@@ -3,25 +3,28 @@ import pandas as pd
 
 # pitch characteristics to be generated/put into pitch outcome model
 _pitch_characteristics = [
-    'release_speed', 'release_spin_rate',
-    'plate_x', 'plate_z',
+    "release_speed",
+    "release_spin_rate",
+    "plate_x",
+    "plate_z",
 ]
-_pitch_outcome_game_state_features = 'p_throws strikes balls'.split()
+_pitch_outcome_game_state_features = "p_throws strikes balls".split()
 
-PITCH_OUTCOME_FEATURES = _pitch_characteristics + \
-                         _pitch_outcome_game_state_features
-PITCH_OUTCOME_TARGET_COL = 'pitch_outcome'
+PITCH_OUTCOME_FEATURES = _pitch_characteristics + _pitch_outcome_game_state_features
+PITCH_OUTCOME_TARGET_COL = "pitch_outcome"
+
 
 def format_backtest_date(backtest_date):
     """
-    format the user input backtest date to sqlite query format 
+    format the user input backtest date to sqlite query format
     """
 
     if backtest_date is not None:
         backtest_date = f"and game_date <= date('{backtest_date}')"
     else:
-        backtest_date = ''
+        backtest_date = ""
     return backtest_date
+
 
 def get_game_state_t_prob_data():
 
@@ -65,8 +68,8 @@ def get_hit_classification_data(venue_name, backtest_date=None):
     select game_pk from VenueGamePkMapping
     where venue_name = '{venue_name}'
     """
-    game_pks = query_mlb_db(venue_query)['game_pk'].astype(str)
-    sql_game_pks = ', '.join(game_pks)
+    game_pks = query_mlb_db(venue_query)["game_pk"].astype(str)
+    sql_game_pks = ", ".join(game_pks)
 
     statcast_query = f"""
     SELECT
@@ -106,44 +109,56 @@ def get_hit_classification_data(venue_name, backtest_date=None):
     {backtest_date}
     ORDER BY GAME_DATE ASC;
     """
-    target_col = 'simplified_outcome'
+    target_col = "simplified_outcome"
 
     df = query_mlb_db(statcast_query)
 
-    speed_df = query_mlb_db(
-            'select mlb_id as batter, speed from PlayerSpeed;')
-    oaa_df = query_mlb_db("""
+    speed_df = query_mlb_db("select mlb_id as batter, speed from PlayerSpeed;")
+    oaa_df = query_mlb_db(
+        """
         select o.year as 'game_year', t.statcast_name as 'fielding_team',
                           o.oaa_rhh_standardized, o.oaa_lhh_standardized
         from TeamOAA o
         left join TeamIdMapping t on o.entity_id = t.team_id
-    """)
-    oaa_df['game_year'] = oaa_df['game_year'].astype(int)
+    """
+    )
+    oaa_df["game_year"] = oaa_df["game_year"].astype(int)
 
-    df = df.merge(speed_df, how='left', on='batter')
-    df = df.merge(oaa_df, how='left', on=['game_year', 'fielding_team'])
+    df = df.merge(speed_df, how="left", on="batter")
+    df = df.merge(oaa_df, how="left", on=["game_year", "fielding_team"])
 
-    df['speed'] = df['speed'].astype(float)
-    df['speed'] = df['speed'].fillna(df['speed'].mean())
-    
-    
-    df['oaa'] = df.apply(lambda row: row['oaa_rhh_standardized']
-                         if row['stand'] =='R' 
-                         else row['oaa_lhh_standardized'],
-                         axis=1)
+    df["speed"] = df["speed"].astype(float)
+    df["speed"] = df["speed"].fillna(df["speed"].mean())
 
-    df = df.drop(['batter', 'game_pk', 'oaa_rhh_standardized',
-                  'oaa_lhh_standardized', 'fielding_team'], axis=1)
+    df["oaa"] = df.apply(
+        lambda row: (
+            row["oaa_rhh_standardized"]
+            if row["stand"] == "R"
+            else row["oaa_lhh_standardized"]
+        ),
+        axis=1,
+    )
+
+    df = df.drop(
+        [
+            "batter",
+            "game_pk",
+            "oaa_rhh_standardized",
+            "oaa_lhh_standardized",
+            "fielding_team",
+        ],
+        axis=1,
+    )
 
     return df, target_col
 
+
 def get_pitch_sequencing_data(pitcher, backtest_date=None):
-    """
-    """
+    """ """
 
     # format input backtest date as query
     backtest_date = format_backtest_date(backtest_date)
-    
+
     # only care about RECENT pitch arsenal - what has this pitcher thrown in
     # last 1000 pithhes?
     pitch_arsenal_query = f"""
@@ -158,8 +173,8 @@ def get_pitch_sequencing_data(pitcher, backtest_date=None):
         order by game_date desc limit 1000
         )
     """
-    pitch_arsenal = query_mlb_db(pitch_arsenal_query)['pitch_type']
-    sql_pitch_arsenal = ', '.join(pitch_arsenal)
+    pitch_arsenal = query_mlb_db(pitch_arsenal_query)["pitch_type"]
+    sql_pitch_arsenal = ", ".join(pitch_arsenal)
 
     query_str = f"""
         SELECT game_year, pitch_type, batter, pitch_number, strikes, balls,
@@ -189,31 +204,32 @@ def get_pitch_sequencing_data(pitcher, backtest_date=None):
         {backtest_date}
         ORDER BY game_year, at_bat_number, pitch_number
     """
-    target_col = 'pitch_type'
-    pitcher_df = query_mlb_db(query_str).set_index('batter')
+    target_col = "pitch_type"
+    pitcher_df = query_mlb_db(query_str).set_index("batter")
 
-    #get datasets for batters standardized woba and strike pct into
-    #pitchers arsenal
-    batter_query = lambda table: f"""select batter,
-                                     {sql_pitch_arsenal} from {table}"""
-    strike_df = query_mlb_db(
-            batter_query('BatterStrikePctByPitchType')
-            ).set_index('batter').add_suffix('_strike')
-    woba_df = query_mlb_db(
-            batter_query('BatterAvgWobaByPitchType')
-            ).set_index('batter').add_suffix('_woba')
+    # get datasets for batters standardized woba and strike pct into
+    # pitchers arsenal
+    batter_query = lambda table: f"""select batter, {sql_pitch_arsenal} from {table}"""
+    strike_df = (
+        query_mlb_db(batter_query("BatterStrikePctByPitchType"))
+        .set_index("batter")
+        .add_suffix("_strike")
+    )
+    woba_df = (
+        query_mlb_db(batter_query("BatterAvgWobaByPitchType"))
+        .set_index("batter")
+        .add_suffix("_woba")
+    )
 
-    df = pitcher_df.merge(strike_df, left_index=True, right_index=True,
-                          how='left')
-    df = df.merge(woba_df, left_index=True, right_index=True, how='left')
+    df = pitcher_df.merge(strike_df, left_index=True, right_index=True, how="left")
+    df = df.merge(woba_df, left_index=True, right_index=True, how="left")
     df.reset_index(drop=True, inplace=True)
 
     return df, target_col, pitch_arsenal
 
-def get_hit_outcome_data(batter_id: int,
-                         backtest_date=None) -> pd.DataFrame:
-    """
-    """
+
+def get_hit_outcome_data(batter_id: int | None, backtest_date=None) -> pd.DataFrame:
+    """ """
 
     # format input backtest date as query
     backtest_date = format_backtest_date(backtest_date)
@@ -224,7 +240,9 @@ def get_hit_outcome_data(batter_id: int,
             ROUND((-(180 / PI()) * atan2(hc_x - 130, 213 - hc_y) + 90))
             as spray_angle
         from Statcast
-        where batter={batter_id}
+        {f"where batter={batter_id}" 
+         if batter_id is not None else 
+         "where stand='R' and sz_top >= 3.3 and sz_top <= 3.5 and sz_bot <= 1.7 and sz_bot >= 1.5"}
         and description = 'hit_into_play'
         and
             launch_speed &
@@ -240,11 +258,12 @@ def get_hit_outcome_data(batter_id: int,
     return data
 
 
-def get_pitch_outcome_data(batter_id: int,
-                           backtest_date=None) -> tuple[pd.DataFrame, str]:
+def get_pitch_outcome_data(
+    batter_id: int | None, backtest_date=None
+) -> tuple[pd.DataFrame, str]:
     """Function to get training data for a batter's pitch outcome model
 
-    For a given player, returns the model features for the pitch outcome model 
+    For a given player, returns the model features for the pitch outcome model
     (PITCH_OUTCOME_FEATURES) and the pitch_outcome (the target for this model).
     If a backtest date is supplied, will only return data before the backtest
     date.
@@ -287,7 +306,9 @@ def get_pitch_outcome_data(batter_id: int,
             end as {PITCH_OUTCOME_TARGET_COL},
             {', '.join(PITCH_OUTCOME_FEATURES)}
         from Statcast
-        where batter={batter_id}
+        {f"where batter={batter_id}" 
+         if batter_id is not None else 
+         "where stand='R' and sz_top >= 3.3 and sz_top <= 3.5 and sz_bot <= 1.7 and sz_bot >= 1.5"}
         and {' & '.join(PITCH_OUTCOME_FEATURES)} 
         is not null
         {backtest_date}
@@ -298,16 +319,12 @@ def get_pitch_outcome_data(batter_id: int,
 
     return df, PITCH_OUTCOME_TARGET_COL
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     kukuchi = 579328
     jones = 683003
 
-    df, target_col = get_pitch_outcome_data(665742, backtest_date='2022-01-01')
+    df, target_col = get_pitch_outcome_data(665742, backtest_date="2022-01-01")
     print(target_col)
     print(df.head())
-
-
-
-
-
