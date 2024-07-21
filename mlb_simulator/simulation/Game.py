@@ -41,8 +41,8 @@ class Game:
 
     def fit(self):
         # fit hit classifier (requires venue name)
-        if self.venue_name is not None:
-            self.hit_classifier = HitClassifier(self.venue_name)
+        if self.venue_id is not None:
+            self.hit_classifier = HitClassifier(self.venue_id)
         else:
             print("Error getting venue name")
             exit()

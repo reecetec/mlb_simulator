@@ -28,7 +28,7 @@ def format_backtest_date(backtest_date):
 
 def get_game_state_t_prob_data():
 
-    query_str = f"""
+    query_str = """
     select game_pk, inning, inning_topbot, at_bat_number, pitch_number,
         outs_when_up, post_bat_score - bat_score as runs_scored, stand,
     CASE
@@ -59,14 +59,14 @@ def get_game_state_t_prob_data():
     return dataset
 
 
-def get_hit_classification_data(venue_name, backtest_date=None):
+def get_hit_classification_data(venue_id, backtest_date=None):
 
     backtest_date = format_backtest_date(backtest_date)
 
     # get all game pks for this venue
     venue_query = f"""
     select game_pk from VenueGamePkMapping
-    where venue_name = '{venue_name}'
+    where venue_id = '{venue_id}'
     """
     game_pks = query_mlb_db(venue_query)["game_pk"].astype(str)
     sql_game_pks = ", ".join(game_pks)
@@ -250,7 +250,8 @@ def get_hit_outcome_data(batter_id: int | None, backtest_date=None) -> pd.DataFr
             spray_angle    
         is not null
         {backtest_date}
-        order by game_date asc, at_bat_number asc, pitch_number asc;
+        order by game_date asc, at_bat_number asc, pitch_number asc
+        {'limit 25000' if batter_id is None else ''};
     """
 
     data = query_mlb_db(query_str)
@@ -312,7 +313,8 @@ def get_pitch_outcome_data(
         and {' & '.join(PITCH_OUTCOME_FEATURES)} 
         is not null
         {backtest_date}
-        order by game_date asc, at_bat_number asc, pitch_number asc;
+        order by game_date asc, at_bat_number asc, pitch_number asc
+        {'limit 25000' if batter_id is None else ''};
     """
 
     df = query_mlb_db(query_str)

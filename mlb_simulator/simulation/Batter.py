@@ -36,6 +36,7 @@ class Batter(Player):
         except Exception as e:
             print(f"Error fitting {rotowire_id}, fitting default model")
             print(e)
+            logger.info(f"Fitting default models...")
             self.pitch_outcome = PitchOutcome()
             self.hit_outcome = HitOutcome()
             self.pitch_outcome.fit()
@@ -69,8 +70,9 @@ class Batter(Player):
 
         # average batter stats
         self.speed = 27.5
-        self.sz_top = 3.4
-        self.sz_bot = 1.6
+        self.sz = {"sz_top": 3.4, "sz_bot": 1.6}
+        # self.sz_top = 3.4
+        # self.sz_bot = 1.6
 
         self.stats = {}
         self.stats.update({f"{k}_strike": v for k, v in self.pitch_strike.items()})
