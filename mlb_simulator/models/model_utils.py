@@ -153,7 +153,7 @@ def categorical_model_pipeline(model, data, target_col):
     preprocessor = ColumnTransformer(
         transformers=[
             ("num", StandardScaler(), numeric_features),
-            ("cat", OneHotEncoder(), categorical_features),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
         ]
     )
 
@@ -280,9 +280,6 @@ def balance_classes(X_train, X_test, y_train, y_test):
         )
         X_test = pd.DataFrame(X_test, columns=col_names)
         y_test = np.append(y_test, missing_class)
-
-    # print(X_train.head())
-    # print(X_test.head())
 
     return X_train, X_test, y_train, y_test
 

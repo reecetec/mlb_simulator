@@ -98,8 +98,6 @@ class Simulator:
             return hit_class
 
         else:
-            if swing.pitch_outcome is None:
-                print(f"swing.pitch_outcome is none: {swing}")
             self.state.count(swing.pitch_outcome)
 
         self.state.cumulative_pitch_number += 1
@@ -115,10 +113,6 @@ class Simulator:
         return None
 
     def simulate_ab(self, bat_team, field_team):
-
-        # print(
-        #     f"Simulating {bat_team[bat_team.cur_batter].name} into {field_team.pitcher}"
-        # )
 
         outcome = None
         # until game event occurs, keep throwing pitches.
@@ -139,17 +133,14 @@ class Simulator:
         )
         self.state.process_state_change(new_state, bat_team[bat_team.cur_batter])
 
-        # print(outcome)
-        # print(f"Resulting state: {self.state}")
-
         # reset count, change batter
         self.state.change_ab()
         bat_team.change_batter()
 
 
 if __name__ == "__main__":
-    s = Schedule(for_today=True)
-    some_game = s[2]
+    s = Schedule(for_today=False)
+    some_game = s[0]
     print(some_game)
     game_simulator = Simulator(some_game)
     game_simulator()

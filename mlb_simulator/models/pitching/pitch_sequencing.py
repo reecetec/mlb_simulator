@@ -42,18 +42,14 @@ class PitchSequencer:
 
     def fit(self, backtest_date=None):
 
-        query = get_pitch_sequencing_data(
-            self.pitcher_id, backtest_date=backtest_date
-        )
+        query = get_pitch_sequencing_data(self.pitcher_id, backtest_date=backtest_date)
         dataset, target_col, pitch_arsenal = query
 
         model, le, X, y = mu.categorical_model_pipeline(
             xgb.XGBClassifier, dataset, target_col
         )
 
-        hyperparams = mu.get_hyperparams(
-            self.MODEL_NAME, self.pitcher_id, model, X, y
-        )
+        hyperparams = mu.get_hyperparams(self.MODEL_NAME, self.pitcher_id, model, X, y)
 
         model.set_params(**hyperparams)
         model.fit(X, y)

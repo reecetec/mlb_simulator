@@ -145,7 +145,10 @@ class Count:
             case "hit_by_pitch":
                 self.balls = 4
             case _:
-                print(f"unknown count event: {event}")
+                # print(f"unknown count event: {event}")
+                pass
+            # TODO: sometimes pitch outcome is none for some reason
+            # figure out why...
 
         self.pitch_number += 1
 
