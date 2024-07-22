@@ -7,27 +7,18 @@ Link to documentation: [documentation](https://reecetec.github.io/mlb_simulator/
  - not exhaustive as of now
 
 Todo:
- - Make mlb_simulator/models/ all classes: All of them implement fit and pred
- - lots of cleaning to do:
- ```sh
- make lint
- ```
  - Update doc string format to format seen in data_utils.py
- - finish documenting functions in mlb_simulator/models/
  - write improved pitch characteristic generation model - currently not conditioned on game state
     - more balls will be thrown if count is 0-2 for ex, but not currently a factor
- - re-implement classes for simulation cleanly and using better practices
- - Fix game state transition probabilities edge cases and add script to update this monthly
- - Implement simulation logic from notebook 7.0 in simulation class
-    - also refactor this
- - add logic to track simulation box scores
- - build dashboard to display games being played today, and allow user to run simulation for a desired game from the dash (and view results, box score)
-     - try creating custom react component to display each game in desired format
+ - add logic to track simulation box scores / player statistics
+    - as of now just the game score
+ - optimize simulations to increase speed (cprofile)
+ - 
 
 ## Getting Started
 
 1. Clone the repo
-2. Install the requirements.txt (in a conda env or venv), and then run the following in the project root to create sqlite db
+2. Install the package with poetry
 ```sh
 make data
 ```
@@ -37,8 +28,18 @@ make data
 
 Once the database has been set up:
 
-```sh
-pip install .
+```python
+from mlb_simulator.simulation.Schedule import Schedule
+from mlb_simulator.simulation.Simulator import Simulator
+
+s = Schedule(for_today=True)
+
+# simulate first game in the schedule
+simulator = Simulator(s[0])
+simulator(num_simulations=100)
+
+print(simulator.scores)
+
 ```
 
 ## Usage

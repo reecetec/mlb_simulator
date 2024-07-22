@@ -56,8 +56,7 @@ class Player:
 
     def print_info(self):
         print(
-            f"{self.name}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {
-            self.rotowire_id})"
+            f"{self.name}, {self.pos} (mlbid: {self.mlb_id}, rotowireid: {self.rotowire_id})"
         )
 
 

@@ -33,15 +33,15 @@ class Batter(Player):
             self.hit_outcome = HitOutcome(self.mlb_id)
             self.pitch_outcome.fit()
             self.hit_outcome.fit()
+
+        # load "default batter" object if one exists, otherwise create one
         except Exception as e:
-            print(f"Error fitting {rotowire_id}, fitting default model")
-            print(e)
-            logger.info(f"Fitting default models...")
+            logger.info(f"Error fitting roto id: {rotowire_id}, loading default model")
+            logger.info(e)
             self.pitch_outcome = PitchOutcome()
             self.hit_outcome = HitOutcome()
             self.pitch_outcome.fit()
             self.hit_outcome.fit()
-
             self._get_default_stats()
 
     def __repr__(self):
@@ -71,8 +71,6 @@ class Batter(Player):
         # average batter stats
         self.speed = 27.5
         self.sz = {"sz_top": 3.4, "sz_bot": 1.6}
-        # self.sz_top = 3.4
-        # self.sz_bot = 1.6
 
         self.stats = {}
         self.stats.update({f"{k}_strike": v for k, v in self.pitch_strike.items()})

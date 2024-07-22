@@ -250,7 +250,7 @@ def get_hit_outcome_data(batter_id: int | None, backtest_date=None) -> pd.DataFr
             spray_angle    
         is not null
         {backtest_date}
-        order by game_date asc, at_bat_number asc, pitch_number asc
+        {'order by game_date asc, at_bat_number asc, pitch_number asc' if batter_id is not None else ''}
         {'limit 25000' if batter_id is None else ''};
     """
 
@@ -313,7 +313,7 @@ def get_pitch_outcome_data(
         and {' & '.join(PITCH_OUTCOME_FEATURES)} 
         is not null
         {backtest_date}
-        order by game_date asc, at_bat_number asc, pitch_number asc
+        {'order by game_date asc, at_bat_number asc, pitch_number asc' if batter_id is not None else ''}
         {'limit 25000' if batter_id is None else ''};
     """
 

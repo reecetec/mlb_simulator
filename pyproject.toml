@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "mlb-simulator"
+version = "0.1.0"
+description = "Simulate MLB games play by play"
+authors = ["reecetec <reece.tec@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+beautifulsoup4 = "^4.12.3"
+copulas = "^0.11.0"
+matplotlib = "^3.9.1"
+MLB-StatsAPI = "^1.7.2"
+numpy = "^2.0.1"
+pandas = "^2.2.2"
+pdoc3 = "^0.11.1"
+pybaseball = "^2.2.7"
+pytest = "^8.3.1"
+python-dotenv = "^1.0.1"
+pyvinecopulib = "^0.6.6"
+scikit-learn = "^1.5.1"
+scipy = "^1.14.0"
+SQLAlchemy = "^2.0.31"
+tqdm = "^4.66.4"
+xgboost = "^2.1.0"
+requests = "^2.32.3"
+dill = "^0.3.8"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+jupyterlab = "^4.2.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

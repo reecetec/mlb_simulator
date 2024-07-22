@@ -47,6 +47,11 @@ def get_hyperparams(model_name, player_id, model, X, y):
     return hyperparams
 
 
+def get_default_batter_path():
+    path = os.path.join(get_models_location(), "default_batter", "default_batter.pkl")
+    return path
+
+
 def save_hyperparams(model_name, player_id, hyperparams: dict):
     """
     Save hyperparameters to a JSON file.
@@ -104,8 +109,7 @@ def check_for_hyperparams(model_name, player_id):
             print(
                 (f"Found invalid file format in {model_folder}: {e} \n\n"),
                 (
-                    f"Files in { model_folder
-                    } should be of format: mlbid-%Y%m%d.json \n\n"
+                    f"Files in {model_folder} should be of format: mlbid-%Y%m%d.json \n\n"
                 ),
             )
             raise

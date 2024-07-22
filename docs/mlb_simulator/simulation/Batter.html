@@ -2,18 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.10.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.1">
 <title>mlb_simulator.simulation.Batter API documentation</title>
-<meta name="description" content="" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<meta name="description" content="Batter object. Is able to generate hit classes, e.g., single, strike, etc.
+based on the pitch thrown.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+})</script>
 </head>
 <body>
 <main>
@@ -22,187 +26,8 @@
 <h1 class="title">Module <code>mlb_simulator.simulation.Batter</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import sys
-import os
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
-from simulation.Player import Player
-
-from mlb_simulator.data.data_utils import query_mlb_db
-from features.build_features import get_pitch_outcome_dataset_xgb, get_hit_outcome_dataset
-
-import xgboost as xgb
-import pandas as pd
-import numpy as np
-import logging
-from copy import deepcopy
-from mlb_simulator.models.model_utils import compute_cat_loglik, compute_model_loglik
-
-from scipy.stats import norm, gaussian_kde
-from scipy.interpolate import interp1d    
-
-from pprint import pprint
-
-logger = logging.getLogger(__name__)
-log_fmt = &#39;%(asctime)s - %(name)s - %(levelname)s - %(message)s&#39;
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-class Batter(Player):
-    def __init__(self, mlb_id=None, rotowire_id=None, backtest_date=&#39;&#39;):
-        super().__init__(mlb_id, rotowire_id, backtest_date)
-        logger.info(f&#39;Starting init for {self.name}&#39;)
-        
-        #gather batter characteristics to aid in pitch generation
-        self.stand = query_mlb_db(f&#39;select stand from Statcast where batter={self.mlb_id} and stand is not null limit 1&#39;)[&#39;stand&#39;][0]
-        self.pitch_woba = dict(query_mlb_db(f&#39;select * from BatterAvgWobaByPitchType where batter={self.mlb_id};&#39;).drop(&#39;batter&#39;, axis=1).iloc[0])
-        self.pitch_strike = dict(query_mlb_db(f&#39;select * from BatterStrikePctByPitchType where batter={self.mlb_id};&#39;).drop(&#39;batter&#39;, axis=1).iloc[0])
-        self.speed = float(query_mlb_db(f&#39;select speed from PlayerSpeed where mlb_id={self.mlb_id}&#39;)[&#39;speed&#39;][0])
-        self.sz = dict(query_mlb_db(f&#39;select sz_bot, sz_top from BatterStrikezoneLookup where batter={self.mlb_id}&#39;).iloc[0])
-
-        self.stats = {f&#34;{k}_strike&#34;: v for k, v in self.pitch_strike.items()}
-        self.stats.update({f&#34;{k}_woba&#34;: v for k, v in self.pitch_woba.items()})
-        self.stats.update({f&#34;{k}&#34;: v for k, v in self.sz.items()})
-        self.stats[&#39;speed&#39;] = self.speed
-        self.stats[&#39;stand&#39;] = self.stand
-
-        self.fit_pitch_outcome_model()
-        self.fit_hit_outcome_model()
-        #logger.info(f&#39;{self.name} stands {self.stand}&#39;)
-        logger.info(f&#39;Init complete for {self.name}&#39;)
-
-    # predicts strike, foul, etc.
-    def fit_pitch_outcome_model(self):
-        X, y, encoders = get_pitch_outcome_dataset_xgb(self.mlb_id, backtest_date=self.backtest_date)
-        self.pitch_outcome_encoders = encoders
-        self.pitch_outcome_vars = X.columns
-        params = {&#39;colsample_bytree&#39;: 0.5,
-            &#39;learning_rate&#39;: 0.1,
-            &#39;max_depth&#39;: 5,
-            &#39;n_estimators&#39;: 100,
-            &#39;subsample&#39;: 0.5
-        }
-        self.pitch_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-        self.pitch_outcome_clf.fit(X, y)
-
-        assert(compute_xgboost_loglik(self.pitch_outcome_clf.predict_proba(X),y,&#39;pitch_outcome&#39;) &gt; compute_cat_loglik(X, y, y, &#39;pitch_outcome&#39;))
-
-    # use model
-    def generate_pitch_outcome(self, game_state, pitch_characteristics):
-        # get df of current game state and batter stats to generate pitch
-        combined_data = {**game_state, **pitch_characteristics}
-        df = pd.DataFrame([combined_data])
-
-        #encode cols:
-        for col in df.columns:
-            if col in self.pitch_outcome_encoders.keys():
-                df[col] = self.pitch_outcome_encoders[col].transform(df[col])
-
-        #ensure ordering kept the same as when fit
-        df = df[self.pitch_outcome_vars]
-
-        outcome_distribution = self.pitch_outcome_clf.predict_proba(df)[0]
-        
-        outcome_choice_encoded = np.random.choice(len(outcome_distribution), size=1, p=outcome_distribution)
-        outcome_choice = self.pitch_outcome_encoders[&#39;pitch_outcome&#39;].inverse_transform(outcome_choice_encoded)[0]
-        return outcome_choice
-
-
-    # predicts hit launch speed, angle, etc. 
-    def fit_hit_outcome_model(self):
-        X, y, encoders = get_hit_outcome_dataset(self.mlb_id, backtest_date=self.backtest_date)
-
-        # Step 1: Estimate the marginal distributions using KDE
-        kde_estimators = []
-        inverse_cdfs = []
-
-        self.hit_outcome_cols = y.columns
-
-        for column in self.hit_outcome_cols:
-            kde = gaussian_kde(y[column])
-            kde_estimators.append(kde)
-            
-            # Compute the inverse CDF using interpolation
-            x_vals = np.linspace(y[column].min(), y[column].max(), 1000)
-            cdf_vals = np.array([kde.integrate_box_1d(-np.inf, x) for x in x_vals])
-            inverse_cdf = interp1d(cdf_vals, x_vals, bounds_error=False, fill_value=(x_vals[0], x_vals[-1]))
-            inverse_cdfs.append(inverse_cdf)
-        
-        self.inverse_cdfs = inverse_cdfs
-        
-        # Step 2: Transform data to uniform marginals using the CDF of KDEs
-        uniform_marginals = np.zeros_like(y.values)
-        for i, column in enumerate(y.columns):
-            cdf_values = np.array([kde_estimators[i].integrate_box_1d(-np.inf, x) for x in y[column]])
-            uniform_marginals[:, i] = cdf_values
-        
-        # Step 3: Transform uniform marginals to standard normal marginals
-        normal_marginals = norm.ppf(uniform_marginals)
-        
-        # Ensure no infinite values (can occur if uniform marginals are exactly 0 or 1)
-        normal_marginals[np.isinf(normal_marginals)] = np.nan
-        self.normal_marginals = np.nan_to_num(normal_marginals)
-
-    def generate_hit_outcome(self):
-        # Step 4: Generate new samples from a multivariate normal distribution
-        mean = np.zeros(len(self.hit_outcome_cols))
-        cov = np.corrcoef(self.normal_marginals, rowvar=False)
-        new_samples_normal = np.random.multivariate_normal(mean, cov, size=1)
-        
-        # Step 5: Transform new samples from standard normal to uniform marginals
-        new_samples_uniform = norm.cdf(new_samples_normal)
-        
-        # Step 6: Transform uniform marginals back to original KDE marginals
-        new_samples = np.zeros_like(new_samples_uniform)
-        for i, column in enumerate(self.hit_outcome_cols):
-            new_samples[:, i] = self.inverse_cdfs[i](new_samples_uniform[:, i])
-        
-        # Create a DataFrame with the new samples
-        generated_dataframe = pd.DataFrame(new_samples, columns=self.hit_outcome_cols)
-
-        return dict(generated_dataframe.iloc[0])
-
-
-if __name__ == &#39;__main__&#39;:
-    show = 660271
-    showtime = Batter(mlb_id=show)
-    showtime.print_info()
-
-    pitch_characteristics = {
-        &#39;release_speed&#39;: 91.5,
-        &#39;release_spin_rate&#39;: 2541.0,
-        &#39;release_extension&#39;: 6.3,
-        &#39;release_pos_x&#39;: -1.1,
-        &#39;release_pos_y&#39;: 54.2,
-        &#39;release_pos_z&#39;: 5.71,
-        &#39;spin_axis&#39;: 201.0,
-        &#39;pfx_x&#39;: -0.38,
-        &#39;pfx_z&#39;: 1.0,
-        &#39;vx0&#39;: 5.52946075120911,
-        &#39;vy0&#39;: -133.034107193298,
-        &#39;vz0&#39;: -5.81172219449376,
-        &#39;ax&#39;: -5.79249929698345,
-        &#39;ay&#39;: 31.1262248305161,
-        &#39;az&#39;: -19.2977353984413,
-        &#39;plate_x&#39;: 0.77,
-        &#39;plate_z&#39;: 1.91
-    }
-
-    game_state = {
-        &#39;pitch_number&#39;: 1.0,
-        &#39;strikes&#39;: 0.0,
-        &#39;balls&#39;: 0.0,
-    }
-
-    print(showtime.generate_pitch_outcome(game_state, pitch_characteristics))
-    print(showtime.generate_hit_outcome())
-    pprint(showtime.stats)</code></pre>
-</details>
+<p>Batter object. Is able to generate hit classes, e.g., single, strike, etc.
+based on the pitch thrown.</p>
 </section>
 <section>
 </section>
@@ -224,259 +49,146 @@ if __name__ == &#39;__main__&#39;:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Batter(Player):
-    def __init__(self, mlb_id=None, rotowire_id=None, backtest_date=&#39;&#39;):
-        super().__init__(mlb_id, rotowire_id, backtest_date)
-        logger.info(f&#39;Starting init for {self.name}&#39;)
-        
-        #gather batter characteristics to aid in pitch generation
-        self.stand = query_mlb_db(f&#39;select stand from Statcast where batter={self.mlb_id} and stand is not null limit 1&#39;)[&#39;stand&#39;][0]
-        self.pitch_woba = dict(query_mlb_db(f&#39;select * from BatterAvgWobaByPitchType where batter={self.mlb_id};&#39;).drop(&#39;batter&#39;, axis=1).iloc[0])
-        self.pitch_strike = dict(query_mlb_db(f&#39;select * from BatterStrikePctByPitchType where batter={self.mlb_id};&#39;).drop(&#39;batter&#39;, axis=1).iloc[0])
-        self.speed = float(query_mlb_db(f&#39;select speed from PlayerSpeed where mlb_id={self.mlb_id}&#39;)[&#39;speed&#39;][0])
-        self.sz = dict(query_mlb_db(f&#39;select sz_bot, sz_top from BatterStrikezoneLookup where batter={self.mlb_id}&#39;).iloc[0])
 
+    Hit = namedtuple(&#34;Hit&#34;, &#34;pitch_outcome hit_outcome&#34;)
+
+    def __init__(self, mlb_id=None, rotowire_id=None, backtest_date=&#34;&#34;):
+        try:
+            super().__init__(mlb_id, rotowire_id, backtest_date)
+            logger.info(f&#34;Starting init for {self.name}&#34;)
+
+            self._get_stats()
+
+            # instantiate and fit models
+            self.pitch_outcome = PitchOutcome(self.mlb_id)
+            self.hit_outcome = HitOutcome(self.mlb_id)
+            self.pitch_outcome.fit()
+            self.hit_outcome.fit()
+
+        # load &#34;default batter&#34; object if one exists, otherwise create one
+        except Exception as e:
+            logger.info(f&#34;Error fitting roto id: {rotowire_id}, loading default model&#34;)
+            logger.info(e)
+            self.pitch_outcome = PitchOutcome()
+            self.hit_outcome = HitOutcome()
+            self.pitch_outcome.fit()
+            self.hit_outcome.fit()
+            self._get_default_stats()
+
+    def __repr__(self):
+        return f&#34;Batter(mlb_id={self.mlb_id}, rotowire_id={self.rotowire_id})&#34;
+
+    def __call__(self, game_state, pitch_chars):
+        &#34;&#34;&#34;Generate hit outcome given a pitch&#34;&#34;&#34;
+
+        features = pd.DataFrame({**game_state, **pitch_chars})
+
+        pitch_outcome = self.pitch_outcome(features)
+
+        if pitch_outcome == &#34;hit_into_play&#34;:
+            hit_outcome = self.hit_outcome()
+            return Batter.Hit(pitch_outcome, hit_outcome)
+
+        return Batter.Hit(pitch_outcome, None)
+
+    def _get_default_stats(self):
+        # over 60% of batters hit right
+        self.stand = &#34;R&#34;
+
+        pitch_types = [&#34;CH&#34;, &#34;CU&#34;, &#34;FC&#34;, &#34;FF&#34;, &#34;FS&#34;, &#34;KC&#34;, &#34;SI&#34;, &#34;SL&#34;, &#34;ST&#34;, &#34;SV&#34;]
+        self.pitch_woba = {pitch: 0.0 for pitch in pitch_types}
+        self.pitch_strike = {pitch: 0.0 for pitch in pitch_types}
+
+        # average batter stats
+        self.speed = 27.5
+        self.sz = {&#34;sz_top&#34;: 3.4, &#34;sz_bot&#34;: 1.6}
+
+        self.stats = {}
+        self.stats.update({f&#34;{k}_strike&#34;: v for k, v in self.pitch_strike.items()})
+        self.stats.update({f&#34;{k}_woba&#34;: v for k, v in self.pitch_woba.items()})
+        self.stats.update({f&#34;{k}&#34;: v for k, v in self.sz.items()})
+        self.stats[&#34;speed&#34;] = self.speed
+        self.stats[&#34;stand&#34;] = self.stand
+
+    def _get_stats(self):
+        self.stand = query_mlb_db(
+            f&#34;&#34;&#34;
+                                  select stand from Statcast
+                                  where batter={self.mlb_id}
+                                  and stand is not null limit 1
+                                  &#34;&#34;&#34;
+        )[&#34;stand&#34;][0]
+        self.pitch_woba = dict(
+            query_mlb_db(
+                f&#34;&#34;&#34;
+                             select * from BatterAvgWobaByPitchType
+                             where batter={self.mlb_id}
+                             &#34;&#34;&#34;
+            )
+            .drop(&#34;batter&#34;, axis=1)
+            .iloc[0]
+        )
+        self.pitch_strike = dict(
+            query_mlb_db(
+                f&#34;&#34;&#34;
+                             select * from BatterStrikePctByPitchType
+                             where batter={self.mlb_id}
+                             &#34;&#34;&#34;
+            )
+            .drop(&#34;batter&#34;, axis=1)
+            .iloc[0]
+        )
+
+        speed_query = query_mlb_db(
+            f&#34;&#34;&#34;
+                                   select speed from PlayerSpeed
+                                   where mlb_id={self.mlb_id}
+                                   &#34;&#34;&#34;
+        )[&#34;speed&#34;][0]
+
+        if isinstance(speed_query, (int, float, str)):
+            self.speed = float(speed_query)
+        else:
+            logger.critical(f&#34;Error getting batter speed for {self.name}&#34;)
+
+        self.sz = dict(
+            query_mlb_db(
+                f&#34;&#34;&#34;
+                             select sz_bot, sz_top from BatterStrikezoneLookup
+                             where batter={self.mlb_id}
+                             &#34;&#34;&#34;
+            ).iloc[0]
+        )
         self.stats = {f&#34;{k}_strike&#34;: v for k, v in self.pitch_strike.items()}
         self.stats.update({f&#34;{k}_woba&#34;: v for k, v in self.pitch_woba.items()})
         self.stats.update({f&#34;{k}&#34;: v for k, v in self.sz.items()})
-        self.stats[&#39;speed&#39;] = self.speed
-        self.stats[&#39;stand&#39;] = self.stand
-
-        self.fit_pitch_outcome_model()
-        self.fit_hit_outcome_model()
-        #logger.info(f&#39;{self.name} stands {self.stand}&#39;)
-        logger.info(f&#39;Init complete for {self.name}&#39;)
-
-    # predicts strike, foul, etc.
-    def fit_pitch_outcome_model(self):
-        X, y, encoders = get_pitch_outcome_dataset_xgb(self.mlb_id, backtest_date=self.backtest_date)
-        self.pitch_outcome_encoders = encoders
-        self.pitch_outcome_vars = X.columns
-        params = {&#39;colsample_bytree&#39;: 0.5,
-            &#39;learning_rate&#39;: 0.1,
-            &#39;max_depth&#39;: 5,
-            &#39;n_estimators&#39;: 100,
-            &#39;subsample&#39;: 0.5
-        }
-        self.pitch_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-        self.pitch_outcome_clf.fit(X, y)
-
-        assert(compute_xgboost_loglik(self.pitch_outcome_clf.predict_proba(X),y,&#39;pitch_outcome&#39;) &gt; compute_cat_loglik(X, y, y, &#39;pitch_outcome&#39;))
-
-    # use model
-    def generate_pitch_outcome(self, game_state, pitch_characteristics):
-        # get df of current game state and batter stats to generate pitch
-        combined_data = {**game_state, **pitch_characteristics}
-        df = pd.DataFrame([combined_data])
-
-        #encode cols:
-        for col in df.columns:
-            if col in self.pitch_outcome_encoders.keys():
-                df[col] = self.pitch_outcome_encoders[col].transform(df[col])
-
-        #ensure ordering kept the same as when fit
-        df = df[self.pitch_outcome_vars]
-
-        outcome_distribution = self.pitch_outcome_clf.predict_proba(df)[0]
-        
-        outcome_choice_encoded = np.random.choice(len(outcome_distribution), size=1, p=outcome_distribution)
-        outcome_choice = self.pitch_outcome_encoders[&#39;pitch_outcome&#39;].inverse_transform(outcome_choice_encoded)[0]
-        return outcome_choice
-
-
-    # predicts hit launch speed, angle, etc. 
-    def fit_hit_outcome_model(self):
-        X, y, encoders = get_hit_outcome_dataset(self.mlb_id, backtest_date=self.backtest_date)
-
-        # Step 1: Estimate the marginal distributions using KDE
-        kde_estimators = []
-        inverse_cdfs = []
-
-        self.hit_outcome_cols = y.columns
-
-        for column in self.hit_outcome_cols:
-            kde = gaussian_kde(y[column])
-            kde_estimators.append(kde)
-            
-            # Compute the inverse CDF using interpolation
-            x_vals = np.linspace(y[column].min(), y[column].max(), 1000)
-            cdf_vals = np.array([kde.integrate_box_1d(-np.inf, x) for x in x_vals])
-            inverse_cdf = interp1d(cdf_vals, x_vals, bounds_error=False, fill_value=(x_vals[0], x_vals[-1]))
-            inverse_cdfs.append(inverse_cdf)
-        
-        self.inverse_cdfs = inverse_cdfs
-        
-        # Step 2: Transform data to uniform marginals using the CDF of KDEs
-        uniform_marginals = np.zeros_like(y.values)
-        for i, column in enumerate(y.columns):
-            cdf_values = np.array([kde_estimators[i].integrate_box_1d(-np.inf, x) for x in y[column]])
-            uniform_marginals[:, i] = cdf_values
-        
-        # Step 3: Transform uniform marginals to standard normal marginals
-        normal_marginals = norm.ppf(uniform_marginals)
-        
-        # Ensure no infinite values (can occur if uniform marginals are exactly 0 or 1)
-        normal_marginals[np.isinf(normal_marginals)] = np.nan
-        self.normal_marginals = np.nan_to_num(normal_marginals)
-
-    def generate_hit_outcome(self):
-        # Step 4: Generate new samples from a multivariate normal distribution
-        mean = np.zeros(len(self.hit_outcome_cols))
-        cov = np.corrcoef(self.normal_marginals, rowvar=False)
-        new_samples_normal = np.random.multivariate_normal(mean, cov, size=1)
-        
-        # Step 5: Transform new samples from standard normal to uniform marginals
-        new_samples_uniform = norm.cdf(new_samples_normal)
-        
-        # Step 6: Transform uniform marginals back to original KDE marginals
-        new_samples = np.zeros_like(new_samples_uniform)
-        for i, column in enumerate(self.hit_outcome_cols):
-            new_samples[:, i] = self.inverse_cdfs[i](new_samples_uniform[:, i])
-        
-        # Create a DataFrame with the new samples
-        generated_dataframe = pd.DataFrame(new_samples, columns=self.hit_outcome_cols)
-
-        return dict(generated_dataframe.iloc[0])</code></pre>
+        self.stats[&#34;speed&#34;] = self.speed
+        self.stats[&#34;stand&#34;] = self.stand</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>simulation.Player.Player</li>
+<li><a title="mlb_simulator.simulation.Player.Player" href="Player.html#mlb_simulator.simulation.Player.Player">Player</a></li>
 </ul>
-<h3>Methods</h3>
+<h3>Class variables</h3>
 <dl>
-<dt id="mlb_simulator.simulation.Batter.Batter.fit_hit_outcome_model"><code class="name flex">
-<span>def <span class="ident">fit_hit_outcome_model</span></span>(<span>self)</span>
-</code></dt>
+<dt id="mlb_simulator.simulation.Batter.Batter.Hit"><code class="name">var <span class="ident">Hit</span></code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def fit_hit_outcome_model(self):
-    X, y, encoders = get_hit_outcome_dataset(self.mlb_id, backtest_date=self.backtest_date)
-
-    # Step 1: Estimate the marginal distributions using KDE
-    kde_estimators = []
-    inverse_cdfs = []
-
-    self.hit_outcome_cols = y.columns
-
-    for column in self.hit_outcome_cols:
-        kde = gaussian_kde(y[column])
-        kde_estimators.append(kde)
-        
-        # Compute the inverse CDF using interpolation
-        x_vals = np.linspace(y[column].min(), y[column].max(), 1000)
-        cdf_vals = np.array([kde.integrate_box_1d(-np.inf, x) for x in x_vals])
-        inverse_cdf = interp1d(cdf_vals, x_vals, bounds_error=False, fill_value=(x_vals[0], x_vals[-1]))
-        inverse_cdfs.append(inverse_cdf)
-    
-    self.inverse_cdfs = inverse_cdfs
-    
-    # Step 2: Transform data to uniform marginals using the CDF of KDEs
-    uniform_marginals = np.zeros_like(y.values)
-    for i, column in enumerate(y.columns):
-        cdf_values = np.array([kde_estimators[i].integrate_box_1d(-np.inf, x) for x in y[column]])
-        uniform_marginals[:, i] = cdf_values
-    
-    # Step 3: Transform uniform marginals to standard normal marginals
-    normal_marginals = norm.ppf(uniform_marginals)
-    
-    # Ensure no infinite values (can occur if uniform marginals are exactly 0 or 1)
-    normal_marginals[np.isinf(normal_marginals)] = np.nan
-    self.normal_marginals = np.nan_to_num(normal_marginals)</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Batter.Batter.fit_pitch_outcome_model"><code class="name flex">
-<span>def <span class="ident">fit_pitch_outcome_model</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def fit_pitch_outcome_model(self):
-    X, y, encoders = get_pitch_outcome_dataset_xgb(self.mlb_id, backtest_date=self.backtest_date)
-    self.pitch_outcome_encoders = encoders
-    self.pitch_outcome_vars = X.columns
-    params = {&#39;colsample_bytree&#39;: 0.5,
-        &#39;learning_rate&#39;: 0.1,
-        &#39;max_depth&#39;: 5,
-        &#39;n_estimators&#39;: 100,
-        &#39;subsample&#39;: 0.5
-    }
-    self.pitch_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-    self.pitch_outcome_clf.fit(X, y)
-
-    assert(compute_xgboost_loglik(self.pitch_outcome_clf.predict_proba(X),y,&#39;pitch_outcome&#39;) &gt; compute_cat_loglik(X, y, y, &#39;pitch_outcome&#39;))</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Batter.Batter.generate_hit_outcome"><code class="name flex">
-<span>def <span class="ident">generate_hit_outcome</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def generate_hit_outcome(self):
-    # Step 4: Generate new samples from a multivariate normal distribution
-    mean = np.zeros(len(self.hit_outcome_cols))
-    cov = np.corrcoef(self.normal_marginals, rowvar=False)
-    new_samples_normal = np.random.multivariate_normal(mean, cov, size=1)
-    
-    # Step 5: Transform new samples from standard normal to uniform marginals
-    new_samples_uniform = norm.cdf(new_samples_normal)
-    
-    # Step 6: Transform uniform marginals back to original KDE marginals
-    new_samples = np.zeros_like(new_samples_uniform)
-    for i, column in enumerate(self.hit_outcome_cols):
-        new_samples[:, i] = self.inverse_cdfs[i](new_samples_uniform[:, i])
-    
-    # Create a DataFrame with the new samples
-    generated_dataframe = pd.DataFrame(new_samples, columns=self.hit_outcome_cols)
-
-    return dict(generated_dataframe.iloc[0])</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Batter.Batter.generate_pitch_outcome"><code class="name flex">
-<span>def <span class="ident">generate_pitch_outcome</span></span>(<span>self, game_state, pitch_characteristics)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def generate_pitch_outcome(self, game_state, pitch_characteristics):
-    # get df of current game state and batter stats to generate pitch
-    combined_data = {**game_state, **pitch_characteristics}
-    df = pd.DataFrame([combined_data])
-
-    #encode cols:
-    for col in df.columns:
-        if col in self.pitch_outcome_encoders.keys():
-            df[col] = self.pitch_outcome_encoders[col].transform(df[col])
-
-    #ensure ordering kept the same as when fit
-    df = df[self.pitch_outcome_vars]
-
-    outcome_distribution = self.pitch_outcome_clf.predict_proba(df)[0]
-    
-    outcome_choice_encoded = np.random.choice(len(outcome_distribution), size=1, p=outcome_distribution)
-    outcome_choice = self.pitch_outcome_encoders[&#39;pitch_outcome&#39;].inverse_transform(outcome_choice_encoded)[0]
-    return outcome_choice</code></pre>
-</details>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mlb_simulator.simulation.Player.Player" href="Player.html#mlb_simulator.simulation.Player.Player">Player</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mlb_simulator.simulation.Player.Player.get_player_info" href="Player.html#mlb_simulator.simulation.Player.Player.get_player_info">get_player_info</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
 </article>
 <nav id="sidebar">
-<h1>Index</h1>
 <div class="toc">
 <ul></ul>
 </div>
@@ -491,10 +203,7 @@ if __name__ == &#39;__main__&#39;:
 <li>
 <h4><code><a title="mlb_simulator.simulation.Batter.Batter" href="#mlb_simulator.simulation.Batter.Batter">Batter</a></code></h4>
 <ul class="">
-<li><code><a title="mlb_simulator.simulation.Batter.Batter.fit_hit_outcome_model" href="#mlb_simulator.simulation.Batter.Batter.fit_hit_outcome_model">fit_hit_outcome_model</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Batter.Batter.fit_pitch_outcome_model" href="#mlb_simulator.simulation.Batter.Batter.fit_pitch_outcome_model">fit_pitch_outcome_model</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Batter.Batter.generate_hit_outcome" href="#mlb_simulator.simulation.Batter.Batter.generate_hit_outcome">generate_hit_outcome</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Batter.Batter.generate_pitch_outcome" href="#mlb_simulator.simulation.Batter.Batter.generate_pitch_outcome">generate_pitch_outcome</a></code></li>
+<li><code><a title="mlb_simulator.simulation.Batter.Batter.Hit" href="#mlb_simulator.simulation.Batter.Batter.Hit">Hit</a></code></li>
 </ul>
 </li>
 </ul>
@@ -503,7 +212,7 @@ if __name__ == &#39;__main__&#39;:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.1</a>.</p>
 </footer>
 </body>
 </html>

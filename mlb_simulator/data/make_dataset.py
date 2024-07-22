@@ -139,9 +139,7 @@ def update_statcast_table():
                     )
 
                     logger.info(
-                        f"Successfully uploaded {
-                        len(upload_df)
-                        } rows to table Statcast"
+                        f"Successfully uploaded {len(upload_df)} rows to table Statcast"
                     )
 
         else:
@@ -182,9 +180,7 @@ def update_statcast_table():
                 )
 
                 logger.info(
-                    f"Successfully uploaded {
-                    len(upload_df)
-                    } rows to table Statcast"
+                    f"Successfully uploaded {len(upload_df)} rows to table Statcast"
                 )
             else:
                 logger.info(f"Statcast query was empty")
@@ -424,8 +420,7 @@ def update_venue_game_pk_mapping():
         venue_data = []
         for game_pk in tqdm(missing_game_pks, total=len(missing_game_pks)):
             res = requests.get(
-                f"https://statsapi.mlb.com/api/v1/schedule?gamePk={
-                        game_pk}"
+                f"https://statsapi.mlb.com/api/v1/schedule?gamePk={game_pk}"
             )
             if res.status_code == 200:
                 game_json = res.json()
@@ -443,8 +438,7 @@ def update_venue_game_pk_mapping():
         upload_df.to_sql("VenueGamePkMapping", engine, if_exists="append", index=False)
 
         logger.info(
-            f"Successfully uploaded {
-            len(upload_df)} rows to table VenueGamePkMapping"
+            f"Successfully uploaded {len(upload_df)} rows to table VenueGamePkMapping"
         )
     else:
         logger.info(f"No Missing VenueGamePkMapping's")
@@ -567,7 +561,7 @@ def main():
     update_run_speed()
 
     #################### MONTHLY UPDATES ###################################
-    if datetime.now().day == 20:
+    if datetime.now().day == 22:
         logger.info("Running Monthly Updates. This will take a while")
 
         logger.info("Updating player name mapping")

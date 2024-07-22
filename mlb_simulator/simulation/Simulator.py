@@ -9,7 +9,6 @@ from mlb_simulator.simulation.GameState import GameState
 from mlb_simulator.simulation.Schedule import Schedule
 
 import pandas as pd
-
 from tqdm import tqdm
 
 

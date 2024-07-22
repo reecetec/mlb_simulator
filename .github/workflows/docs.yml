@@ -1,45 +1,107 @@
+# name: website
+
+# # build the documentation whenever there are new commits on main
+# on:
+#   push:
+#     branches:
+#       - main
+#     # Alternative: only build for tags.
+#     # tags:
+#     #   - '*'
+
+# # security: restrict permissions for CI jobs.
+# permissions:
+#   contents: read
+
+# jobs:
+#   # Build the documentation and upload the static HTML files as an artifact.
+#   build:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+#           pip install -e .
+
+#       - name: Create documentation
+#         run: pdoc mlb_simulator -o docs --force --html
+
+#       - uses: actions/upload-pages-artifact@v3
+#         with:
+#           path: docs/mlb_simulator/
+
+#   # Deploy the artifact to GitHub pages.
+#   # This is a separate job so that only actions/deploy-pages has the necessary
+#   # permissions.
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     permissions:
+#       pages: write
+#       id-token: write
+#     environment:
+#       name: github-pages
+#       url: ${{ steps.deployment.outputs.page_url }}
+#     steps:
+#       - id: deployment
+#         uses: actions/deploy-pages@v4
+
 name: website
 
-# build the documentation whenever there are new commits on main
+# Trigger the workflow on push to the main branch
 on:
   push:
     branches:
       - main
-    # Alternative: only build for tags.
+    # Optionally, trigger on tags
     # tags:
     #   - '*'
 
-# security: restrict permissions for CI jobs.
+# Security: restrict permissions for CI jobs
 permissions:
   contents: read
 
 jobs:
-  # Build the documentation and upload the static HTML files as an artifact.
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the code
       - uses: actions/checkout@v4
+
+      # Set up Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      # Install Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      # Install dependencies using Poetry
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e .
+          poetry config virtualenvs.in-project true
+          poetry install
 
+      # Create documentation
       - name: Create documentation
-        run: pdoc mlb_simulator -o docs --force --html
+        run: |
+          poetry run pdoc mlb_simulator -o docs --force --html
 
+      # Upload documentation as an artifact
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/mlb_simulator/
 
-  # Deploy the artifact to GitHub pages.
-  # This is a separate job so that only actions/deploy-pages has the necessary
-  # permissions.
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -50,5 +112,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Deploy the artifact to GitHub Pages
       - id: deployment
         uses: actions/deploy-pages@v4
+

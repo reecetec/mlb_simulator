@@ -2,18 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.10.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.1">
 <title>mlb_simulator.simulation.Game API documentation</title>
-<meta name="description" content="" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<meta name="description" content="Contains information about the game. A schedule consists of these objects.
+Contains the home and away team objects.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+})</script>
 </head>
 <body>
 <main>
@@ -22,184 +26,8 @@
 <h1 class="title">Module <code>mlb_simulator.simulation.Game</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import sys
-import os
-import logging
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-from datetime import timedelta, datetime
-import statsapi
-from copy import deepcopy
-import xgboost as xgb
-import pandas as pd
-import numpy as np
-import pickle
-from pprint import pprint
-from itertools import product
-
-from simulation.Team import Team
-from simulation.State import State
-from features.build_features import get_hit_classification_dataset
-
-logger = logging.getLogger(__name__)
-log_fmt = &#39;%(asctime)s - %(name)s - %(levelname)s - %(message)s&#39;
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-class Game:
-    def __init__(self, rotowire_lineup, rotowire_time, game_tomorrow=False):
-        self.time = rotowire_time
-        self.home_team = Team(rotowire_lineup, True)
-        self.away_team = Team(rotowire_lineup, False)
-        self.game_tomorrow = game_tomorrow 
-
-        #find game venue
-        self.venue_id, self.venue_name = self.get_venue()
-
-        logger.info(f&#39;Running init for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}&#39;)
-
-        #load hit classification model
-        logger.info(f&#39;Fitting hit classification model for {self.venue_name}&#39;)
-        self.fit_hit_classifier()
-
-        #load game state transition dict
-        logger.info(f&#39;Loading game state transition probs&#39;)
-        self.get_game_state_transition_map()
-        self.get_deterministic_transition_map()
-
-        logger.info(&#39;Fitting home team models&#39;)
-        self.home_team.fit_models()
-        logger.info(&#39;Fitting away team models&#39;)
-        self.away_team.fit_models()
-
-        #initialize fresh state
-        logger.info(&#39;Initializing Game State&#39;)
-        self.game_state = State()
-
-        logger.info(f&#39;Init complete for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}&#39;)
-
-
-    def simulate_game(self):
-        pass
-
-    def simulate_inning(self, fielding_team, batting_team):
-        pass
-
-    def simulate_ab(self, fielding_team, batting_team):
-        pass
-
-    def simulate_pitch(self, fielding_team, batting_team):
-        pass
-
-    def print_game_score(self):
-        home_score = self.game_state.home_runs
-        away_score = self.game_state.away_runs
-        if home_score &gt; away_score:
-            print(f&#39;{home_score}-{away_score} {self.home_team.name}-{self.away_team.name}&#39;)
-        else:
-            print(f&#39;{away_score}-{home_score} {self.away_team.name}-{self.home_team.name}&#39;)
-
-    def get_game_state_transition_map(self):
-        with open(&#39;game_state_t_probs.pkl&#39;, &#39;rb&#39;) as f:
-            self.game_state_transition_map = pickle.load(f)
-    
-    def get_deterministic_transition_map(self):
-        deterministic_transitions = {}
-        deterministic_transitions[&#39;K&#39;] = {}
-        deterministic_transitions[&#39;walk&#39;] = {}
-        
-        # Generate all permutations
-        permutations = list(product(range(3), [(False, False, False), (True, False, False), (False, True, False), (False, False, True),
-                                            (True, True, False), (False, True, True), (True, False, True), (True, True, True)]))
-        for state in permutations:
-
-            first, second, third = state[1]
-
-            k_first = &#39;1b&#39; if first else False
-            k_second = &#39;2b&#39; if second else False
-            k_third = &#39;3b&#39; if third else False
-
-            deterministic_transitions[&#39;K&#39;][state] = (state[0] + 1, (k_first, k_second, k_third), 0)
-        
-            new_first, new_second, new_third = &#39;batter&#39;, False, False
-            runs_scored = 0
-            if first and second and third:
-                new_second = &#39;1b&#39;
-                new_third = &#39;2b&#39;
-                runs_scored = 1
-            elif first and not second and not third:
-                new_second = &#39;1b&#39;
-            elif first and second:
-                new_second = &#39;1b&#39;
-                new_third = &#39;2b&#39;
-            elif first and third:
-                new_second = &#39;1b&#39;
-                new_third = &#39;3b&#39;
-            else:
-                if second:
-                    new_second = &#39;2b&#39;
-                if third:
-                    new_third = &#39;3b&#39;
-        
-            deterministic_transitions[&#39;walk&#39;][state] = (state[0], (new_first, new_second, new_third), runs_scored)
-        self.deterministic_transitions = deterministic_transitions
-        
-    
-    def sample_next_state(self, event, stand, cur_state, print_probs=False):
-        if event not in self.game_state_transition_map or stand not in self.game_state_transition_map[event] or cur_state not in self.game_state_transition_map[event][stand]:
-            print(&#39;ERROR: KEY NOT FOUND&#39;)
-            return None  # No transitions available for this event and current state
-
-        next_states = list(self.game_state_transition_map[event][stand][cur_state].keys())
-        probabilities = list(self.game_state_transition_map[event][stand][cur_state].values())
-
-        if print_probs:
-            pprint(self.game_state_transition_map[event][stand][cur_state])
-            
-        next_state = np.random.choice(len(next_states), p=probabilities)
-        return next_states[next_state]
-        
-
-    def fit_hit_classifier(self):
-        X, y, encoders = get_hit_classification_dataset()
-        self.hit_classifier_encoders = deepcopy(encoders)
-        X_stad = X[X[&#39;venue_name&#39;]==self.hit_classifier_encoders[&#39;venue_name&#39;].transform([self.venue_name])[0]].drop(&#39;venue_name&#39;, axis=1)
-        y_stad = y.loc[X_stad.index]
-        params = {&#39;colsample_bytree&#39;: 1.0, &#39;learning_rate&#39;: 0.1, &#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 200, &#39;subsample&#39;: 0.8}
-        self.hit_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-        self.hit_outcome_clf.fit(X_stad, y_stad)
-        self.hit_outcome_clf_cols = X_stad.columns
-    
-    def classify_hit(self, game_state, fielding_team_name, batter_speed, batter_stand, hit_stats, fielding_oaa):
-        input_df = {**game_state, **hit_stats}
-        input_df[&#39;fielding_team&#39;] = self.hit_classifier_encoders[&#39;fielding_team&#39;].transform([fielding_team_name])[0]
-        input_df[&#39;speed&#39;] = batter_speed
-        input_df[&#39;stand&#39;] = self.hit_classifier_encoders[&#39;stand&#39;].transform([batter_stand])[0]
-        input_df[&#39;oaa&#39;] = fielding_oaa
-
-        input_df = pd.DataFrame([input_df])
-        input_df = input_df[self.hit_outcome_clf_cols]
-
-        pred_probas = self.hit_outcome_clf.predict_proba(input_df)[0]
-        hit_class = np.random.choice(list(range(len(pred_probas))), 1, p=pred_probas)
-        return self.hit_classifier_encoders[&#39;simplified_outcome&#39;].inverse_transform(hit_class)[0]
-
-
-    def get_venue(self):
-        todays_date = (datetime.now() + timedelta(days=int(self.game_tomorrow))).strftime(&#39;%Y-%m-%d&#39;)
-        todays_games = statsapi.schedule(date=todays_date)
-
-        for game in todays_games:
-            if game[&#39;home_id&#39;] == int(self.home_team.team_id):
-                return game[&#39;venue_id&#39;], game[&#39;venue_name&#39;]
-        return None, None 
-    
-    </code></pre>
-</details>
+<p>Contains information about the game. A schedule consists of these objects.
+Contains the home and away team objects.</p>
 </section>
 <section>
 </section>
@@ -212,7 +40,7 @@ class Game:
 <dl>
 <dt id="mlb_simulator.simulation.Game.Game"><code class="flex name class">
 <span>class <span class="ident">Game</span></span>
-<span>(</span><span>rotowire_lineup, rotowire_time, game_tomorrow=False)</span>
+<span>(</span><span>time, soup)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -221,376 +49,58 @@ class Game:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Game:
-    def __init__(self, rotowire_lineup, rotowire_time, game_tomorrow=False):
-        self.time = rotowire_time
-        self.home_team = Team(rotowire_lineup, True)
-        self.away_team = Team(rotowire_lineup, False)
-        self.game_tomorrow = game_tomorrow 
 
-        #find game venue
-        self.venue_id, self.venue_name = self.get_venue()
+    def __init__(self, time, soup):
+        self.time = time
 
-        logger.info(f&#39;Running init for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}&#39;)
+        self.home_team = Team(soup)
+        self.away_team = Team(soup, is_home=False)
 
-        #load hit classification model
-        logger.info(f&#39;Fitting hit classification model for {self.venue_name}&#39;)
-        self.fit_hit_classifier()
+        # Schedule object will find these
+        self.venue_id = None
+        self.venue_name = None
 
-        #load game state transition dict
-        logger.info(f&#39;Loading game state transition probs&#39;)
-        self.get_game_state_transition_map()
-        self.get_deterministic_transition_map()
+        # get general game models
+        self.game_state_transition_matrix = GameStateTransitionMatrix()
 
-        logger.info(&#39;Fitting home team models&#39;)
-        self.home_team.fit_models()
-        logger.info(&#39;Fitting away team models&#39;)
-        self.away_team.fit_models()
+    def __repr__(self):
+        return f&#34;Game({self.time})&#34;
 
-        #initialize fresh state
-        logger.info(&#39;Initializing Game State&#39;)
-        self.game_state = State()
+    def __str__(self):
+        if self.venue_name is not None:
+            return (
+                f&#34;{self.away_team} @ {self.home_team}, {self.time} at {self.venue_name}&#34;
+            )
+        return f&#34;{self.away_team} @ {self.home_team}, {self.time}&#34;
 
-        logger.info(f&#39;Init complete for {self.away_team.name} @ {self.home_team.name} starting at {self.time} in {self.venue_name}&#39;)
+    def reset(self):
+        self.home_team.cur_batter = 0
+        self.away_team.cur_batter = 0
 
-
-    def simulate_game(self):
-        pass
-
-    def simulate_inning(self, fielding_team, batting_team):
-        pass
-
-    def simulate_ab(self, fielding_team, batting_team):
-        pass
-
-    def simulate_pitch(self, fielding_team, batting_team):
-        pass
-
-    def print_game_score(self):
-        home_score = self.game_state.home_runs
-        away_score = self.game_state.away_runs
-        if home_score &gt; away_score:
-            print(f&#39;{home_score}-{away_score} {self.home_team.name}-{self.away_team.name}&#39;)
+    def fit(self):
+        # fit hit classifier (requires venue name)
+        if self.venue_id is not None:
+            self.hit_classifier = HitClassifier(self.venue_id)
         else:
-            print(f&#39;{away_score}-{home_score} {self.away_team.name}-{self.home_team.name}&#39;)
-
-    def get_game_state_transition_map(self):
-        with open(&#39;game_state_t_probs.pkl&#39;, &#39;rb&#39;) as f:
-            self.game_state_transition_map = pickle.load(f)
-    
-    def get_deterministic_transition_map(self):
-        deterministic_transitions = {}
-        deterministic_transitions[&#39;K&#39;] = {}
-        deterministic_transitions[&#39;walk&#39;] = {}
-        
-        # Generate all permutations
-        permutations = list(product(range(3), [(False, False, False), (True, False, False), (False, True, False), (False, False, True),
-                                            (True, True, False), (False, True, True), (True, False, True), (True, True, True)]))
-        for state in permutations:
-
-            first, second, third = state[1]
-
-            k_first = &#39;1b&#39; if first else False
-            k_second = &#39;2b&#39; if second else False
-            k_third = &#39;3b&#39; if third else False
-
-            deterministic_transitions[&#39;K&#39;][state] = (state[0] + 1, (k_first, k_second, k_third), 0)
-        
-            new_first, new_second, new_third = &#39;batter&#39;, False, False
-            runs_scored = 0
-            if first and second and third:
-                new_second = &#39;1b&#39;
-                new_third = &#39;2b&#39;
-                runs_scored = 1
-            elif first and not second and not third:
-                new_second = &#39;1b&#39;
-            elif first and second:
-                new_second = &#39;1b&#39;
-                new_third = &#39;2b&#39;
-            elif first and third:
-                new_second = &#39;1b&#39;
-                new_third = &#39;3b&#39;
-            else:
-                if second:
-                    new_second = &#39;2b&#39;
-                if third:
-                    new_third = &#39;3b&#39;
-        
-            deterministic_transitions[&#39;walk&#39;][state] = (state[0], (new_first, new_second, new_third), runs_scored)
-        self.deterministic_transitions = deterministic_transitions
-        
-    
-    def sample_next_state(self, event, stand, cur_state, print_probs=False):
-        if event not in self.game_state_transition_map or stand not in self.game_state_transition_map[event] or cur_state not in self.game_state_transition_map[event][stand]:
-            print(&#39;ERROR: KEY NOT FOUND&#39;)
-            return None  # No transitions available for this event and current state
-
-        next_states = list(self.game_state_transition_map[event][stand][cur_state].keys())
-        probabilities = list(self.game_state_transition_map[event][stand][cur_state].values())
-
-        if print_probs:
-            pprint(self.game_state_transition_map[event][stand][cur_state])
-            
-        next_state = np.random.choice(len(next_states), p=probabilities)
-        return next_states[next_state]
-        
-
-    def fit_hit_classifier(self):
-        X, y, encoders = get_hit_classification_dataset()
-        self.hit_classifier_encoders = deepcopy(encoders)
-        X_stad = X[X[&#39;venue_name&#39;]==self.hit_classifier_encoders[&#39;venue_name&#39;].transform([self.venue_name])[0]].drop(&#39;venue_name&#39;, axis=1)
-        y_stad = y.loc[X_stad.index]
-        params = {&#39;colsample_bytree&#39;: 1.0, &#39;learning_rate&#39;: 0.1, &#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 200, &#39;subsample&#39;: 0.8}
-        self.hit_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-        self.hit_outcome_clf.fit(X_stad, y_stad)
-        self.hit_outcome_clf_cols = X_stad.columns
-    
-    def classify_hit(self, game_state, fielding_team_name, batter_speed, batter_stand, hit_stats, fielding_oaa):
-        input_df = {**game_state, **hit_stats}
-        input_df[&#39;fielding_team&#39;] = self.hit_classifier_encoders[&#39;fielding_team&#39;].transform([fielding_team_name])[0]
-        input_df[&#39;speed&#39;] = batter_speed
-        input_df[&#39;stand&#39;] = self.hit_classifier_encoders[&#39;stand&#39;].transform([batter_stand])[0]
-        input_df[&#39;oaa&#39;] = fielding_oaa
-
-        input_df = pd.DataFrame([input_df])
-        input_df = input_df[self.hit_outcome_clf_cols]
-
-        pred_probas = self.hit_outcome_clf.predict_proba(input_df)[0]
-        hit_class = np.random.choice(list(range(len(pred_probas))), 1, p=pred_probas)
-        return self.hit_classifier_encoders[&#39;simplified_outcome&#39;].inverse_transform(hit_class)[0]
-
-
-    def get_venue(self):
-        todays_date = (datetime.now() + timedelta(days=int(self.game_tomorrow))).strftime(&#39;%Y-%m-%d&#39;)
-        todays_games = statsapi.schedule(date=todays_date)
-
-        for game in todays_games:
-            if game[&#39;home_id&#39;] == int(self.home_team.team_id):
-                return game[&#39;venue_id&#39;], game[&#39;venue_name&#39;]
-        return None, None </code></pre>
+            print(&#34;Error getting venue name&#34;)
+            exit()
+        self.home_team.fit()
+        self.away_team.fit()
+        self.hit_classifier.fit()</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="mlb_simulator.simulation.Game.Game.classify_hit"><code class="name flex">
-<span>def <span class="ident">classify_hit</span></span>(<span>self, game_state, fielding_team_name, batter_speed, batter_stand, hit_stats, fielding_oaa)</span>
+<dt id="mlb_simulator.simulation.Game.Game.fit"><code class="name flex">
+<span>def <span class="ident">fit</span></span>(<span>self)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def classify_hit(self, game_state, fielding_team_name, batter_speed, batter_stand, hit_stats, fielding_oaa):
-    input_df = {**game_state, **hit_stats}
-    input_df[&#39;fielding_team&#39;] = self.hit_classifier_encoders[&#39;fielding_team&#39;].transform([fielding_team_name])[0]
-    input_df[&#39;speed&#39;] = batter_speed
-    input_df[&#39;stand&#39;] = self.hit_classifier_encoders[&#39;stand&#39;].transform([batter_stand])[0]
-    input_df[&#39;oaa&#39;] = fielding_oaa
-
-    input_df = pd.DataFrame([input_df])
-    input_df = input_df[self.hit_outcome_clf_cols]
-
-    pred_probas = self.hit_outcome_clf.predict_proba(input_df)[0]
-    hit_class = np.random.choice(list(range(len(pred_probas))), 1, p=pred_probas)
-    return self.hit_classifier_encoders[&#39;simplified_outcome&#39;].inverse_transform(hit_class)[0]</code></pre>
-</details>
 </dd>
-<dt id="mlb_simulator.simulation.Game.Game.fit_hit_classifier"><code class="name flex">
-<span>def <span class="ident">fit_hit_classifier</span></span>(<span>self)</span>
+<dt id="mlb_simulator.simulation.Game.Game.reset"><code class="name flex">
+<span>def <span class="ident">reset</span></span>(<span>self)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def fit_hit_classifier(self):
-    X, y, encoders = get_hit_classification_dataset()
-    self.hit_classifier_encoders = deepcopy(encoders)
-    X_stad = X[X[&#39;venue_name&#39;]==self.hit_classifier_encoders[&#39;venue_name&#39;].transform([self.venue_name])[0]].drop(&#39;venue_name&#39;, axis=1)
-    y_stad = y.loc[X_stad.index]
-    params = {&#39;colsample_bytree&#39;: 1.0, &#39;learning_rate&#39;: 0.1, &#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 200, &#39;subsample&#39;: 0.8}
-    self.hit_outcome_clf = xgb.XGBClassifier(objective=&#39;multi:softprob&#39;, eval_metric=&#39;mlogloss&#39;, **params)
-    self.hit_outcome_clf.fit(X_stad, y_stad)
-    self.hit_outcome_clf_cols = X_stad.columns</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.get_deterministic_transition_map"><code class="name flex">
-<span>def <span class="ident">get_deterministic_transition_map</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_deterministic_transition_map(self):
-    deterministic_transitions = {}
-    deterministic_transitions[&#39;K&#39;] = {}
-    deterministic_transitions[&#39;walk&#39;] = {}
-    
-    # Generate all permutations
-    permutations = list(product(range(3), [(False, False, False), (True, False, False), (False, True, False), (False, False, True),
-                                        (True, True, False), (False, True, True), (True, False, True), (True, True, True)]))
-    for state in permutations:
-
-        first, second, third = state[1]
-
-        k_first = &#39;1b&#39; if first else False
-        k_second = &#39;2b&#39; if second else False
-        k_third = &#39;3b&#39; if third else False
-
-        deterministic_transitions[&#39;K&#39;][state] = (state[0] + 1, (k_first, k_second, k_third), 0)
-    
-        new_first, new_second, new_third = &#39;batter&#39;, False, False
-        runs_scored = 0
-        if first and second and third:
-            new_second = &#39;1b&#39;
-            new_third = &#39;2b&#39;
-            runs_scored = 1
-        elif first and not second and not third:
-            new_second = &#39;1b&#39;
-        elif first and second:
-            new_second = &#39;1b&#39;
-            new_third = &#39;2b&#39;
-        elif first and third:
-            new_second = &#39;1b&#39;
-            new_third = &#39;3b&#39;
-        else:
-            if second:
-                new_second = &#39;2b&#39;
-            if third:
-                new_third = &#39;3b&#39;
-    
-        deterministic_transitions[&#39;walk&#39;][state] = (state[0], (new_first, new_second, new_third), runs_scored)
-    self.deterministic_transitions = deterministic_transitions</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.get_game_state_transition_map"><code class="name flex">
-<span>def <span class="ident">get_game_state_transition_map</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_game_state_transition_map(self):
-    with open(&#39;game_state_t_probs.pkl&#39;, &#39;rb&#39;) as f:
-        self.game_state_transition_map = pickle.load(f)</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.get_venue"><code class="name flex">
-<span>def <span class="ident">get_venue</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_venue(self):
-    todays_date = (datetime.now() + timedelta(days=int(self.game_tomorrow))).strftime(&#39;%Y-%m-%d&#39;)
-    todays_games = statsapi.schedule(date=todays_date)
-
-    for game in todays_games:
-        if game[&#39;home_id&#39;] == int(self.home_team.team_id):
-            return game[&#39;venue_id&#39;], game[&#39;venue_name&#39;]
-    return None, None </code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.print_game_score"><code class="name flex">
-<span>def <span class="ident">print_game_score</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def print_game_score(self):
-    home_score = self.game_state.home_runs
-    away_score = self.game_state.away_runs
-    if home_score &gt; away_score:
-        print(f&#39;{home_score}-{away_score} {self.home_team.name}-{self.away_team.name}&#39;)
-    else:
-        print(f&#39;{away_score}-{home_score} {self.away_team.name}-{self.home_team.name}&#39;)</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.sample_next_state"><code class="name flex">
-<span>def <span class="ident">sample_next_state</span></span>(<span>self, event, stand, cur_state, print_probs=False)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sample_next_state(self, event, stand, cur_state, print_probs=False):
-    if event not in self.game_state_transition_map or stand not in self.game_state_transition_map[event] or cur_state not in self.game_state_transition_map[event][stand]:
-        print(&#39;ERROR: KEY NOT FOUND&#39;)
-        return None  # No transitions available for this event and current state
-
-    next_states = list(self.game_state_transition_map[event][stand][cur_state].keys())
-    probabilities = list(self.game_state_transition_map[event][stand][cur_state].values())
-
-    if print_probs:
-        pprint(self.game_state_transition_map[event][stand][cur_state])
-        
-    next_state = np.random.choice(len(next_states), p=probabilities)
-    return next_states[next_state]</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.simulate_ab"><code class="name flex">
-<span>def <span class="ident">simulate_ab</span></span>(<span>self, fielding_team, batting_team)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def simulate_ab(self, fielding_team, batting_team):
-    pass</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.simulate_game"><code class="name flex">
-<span>def <span class="ident">simulate_game</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def simulate_game(self):
-    pass</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.simulate_inning"><code class="name flex">
-<span>def <span class="ident">simulate_inning</span></span>(<span>self, fielding_team, batting_team)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def simulate_inning(self, fielding_team, batting_team):
-    pass</code></pre>
-</details>
-</dd>
-<dt id="mlb_simulator.simulation.Game.Game.simulate_pitch"><code class="name flex">
-<span>def <span class="ident">simulate_pitch</span></span>(<span>self, fielding_team, batting_team)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def simulate_pitch(self, fielding_team, batting_team):
-    pass</code></pre>
-</details>
 </dd>
 </dl>
 </dd>
@@ -598,7 +108,6 @@ class Game:
 </section>
 </article>
 <nav id="sidebar">
-<h1>Index</h1>
 <div class="toc">
 <ul></ul>
 </div>
@@ -613,17 +122,8 @@ class Game:
 <li>
 <h4><code><a title="mlb_simulator.simulation.Game.Game" href="#mlb_simulator.simulation.Game.Game">Game</a></code></h4>
 <ul class="">
-<li><code><a title="mlb_simulator.simulation.Game.Game.classify_hit" href="#mlb_simulator.simulation.Game.Game.classify_hit">classify_hit</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.fit_hit_classifier" href="#mlb_simulator.simulation.Game.Game.fit_hit_classifier">fit_hit_classifier</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.get_deterministic_transition_map" href="#mlb_simulator.simulation.Game.Game.get_deterministic_transition_map">get_deterministic_transition_map</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.get_game_state_transition_map" href="#mlb_simulator.simulation.Game.Game.get_game_state_transition_map">get_game_state_transition_map</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.get_venue" href="#mlb_simulator.simulation.Game.Game.get_venue">get_venue</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.print_game_score" href="#mlb_simulator.simulation.Game.Game.print_game_score">print_game_score</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.sample_next_state" href="#mlb_simulator.simulation.Game.Game.sample_next_state">sample_next_state</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.simulate_ab" href="#mlb_simulator.simulation.Game.Game.simulate_ab">simulate_ab</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.simulate_game" href="#mlb_simulator.simulation.Game.Game.simulate_game">simulate_game</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.simulate_inning" href="#mlb_simulator.simulation.Game.Game.simulate_inning">simulate_inning</a></code></li>
-<li><code><a title="mlb_simulator.simulation.Game.Game.simulate_pitch" href="#mlb_simulator.simulation.Game.Game.simulate_pitch">simulate_pitch</a></code></li>
+<li><code><a title="mlb_simulator.simulation.Game.Game.fit" href="#mlb_simulator.simulation.Game.Game.fit">fit</a></code></li>
+<li><code><a title="mlb_simulator.simulation.Game.Game.reset" href="#mlb_simulator.simulation.Game.Game.reset">reset</a></code></li>
 </ul>
 </li>
 </ul>
@@ -632,7 +132,7 @@ class Game:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.1</a>.</p>
 </footer>
 </body>
 </html>
