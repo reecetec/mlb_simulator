@@ -6,7 +6,8 @@ from pathlib import Path
 import requests
 import pathlib
 import os
-import sqlite3
+
+# import sqlite3
 import json
 from sqlalchemy import inspect, text
 import pandas as pd
@@ -102,7 +103,8 @@ def update_statcast_table():
             "max(game_date)"
         ].iloc[0]
         today = datetime.today()
-        max_date = datetime.strptime(max_date, "%Y-%m-%d %H:%M:%S.%f")
+        # duckdb acutally gets datetime from the db in datetime
+        # max_date = datetime.strptime(str(max_date), "%Y-%m-%d %H:%M:%S.%f")
 
         # if over 1 year of data missing, query year by year
         if today.year - max_date.year > 1:
@@ -119,7 +121,7 @@ def update_statcast_table():
                         cur_keys = pd.read_sql(
                             f"""select game_date, game_pk, at_bat_number,
                                 pitch_number
-                                from Statcast where game_date >= {year}""",
+                                from Statcast where year(game_date) >= {year}""",
                             engine,
                         )
                         cur_keys["game_date"] = pd.to_datetime(cur_keys["game_date"])
@@ -162,7 +164,7 @@ def update_statcast_table():
                 cur_keys = pd.read_sql(
                     f"""select game_date, game_pk, at_bat_number,
                         pitch_number
-                        from Statcast where game_date > {two_days_prior}""",
+                        from Statcast where game_date > '{two_days_prior}'""",
                     engine,
                 )
                 cur_keys["game_date"] = pd.to_datetime(cur_keys["game_date"])
@@ -309,7 +311,8 @@ def update_similar_sz_table():
         """select batter, avg(sz_top) as sz_top,
                                     avg(sz_bot) as sz_bot
                                     from Statcast
-                                    where sz_top & sz_bot is not null
+                                    where sz_top is not null
+                                    and sz_bot is not null
                                     group by batter
                                   """
     )
@@ -355,7 +358,8 @@ def update_sz_lookup():
         """select batter, round(avg(sz_top),3)
                                     as sz_top, round(avg(sz_bot),3) as sz_bot
                                     from Statcast
-                                    where sz_top & sz_bot is not null
+                                    where sz_top is not null
+                                    and sz_bot is not null
                                     group by batter"""
     )
 
@@ -525,6 +529,13 @@ def update_run_speed():
     df.to_sql("PlayerSpeed", engine, if_exists="replace", index=False)
 
 
+def upload_team_id_map(path):
+    df = pd.read_csv(path)
+    df.rename(columns={"TEAMID": "team_id", "STATCAST": "statcast_name"}, inplace=True)
+    engine = get_mlb_db_engine()
+    df.to_sql("TeamIdMapping", engine, if_exists="replace")
+
+
 def main():
 
     logger.info("Starting SQLite db creation/updates")
@@ -535,8 +546,13 @@ def main():
         os.makedirs(os.path.dirname(DB_LOCATION), exist_ok=True)
 
         # init empty sqlite db
-        conn = sqlite3.connect(DB_LOCATION)
-        conn.close()
+        # conn = sqlite3.connect(DB_LOCATION)
+        # conn.close()
+
+        # init empty duckdb
+        engine = get_mlb_db_engine()
+        with engine.connect() as _:
+            pass
 
     # check if player_name_map exists
     name_map_path = pathlib.Path(DB_LOCATION).parent.parent / "raw" / "name_map.csv"
@@ -545,23 +561,29 @@ def main():
         os.makedirs(os.path.dirname(name_map_path), exist_ok=True)
         update_player_name_map(name_map_path)
 
+    # check if team id map exists
+    team_id_path = pathlib.Path(DB_LOCATION).parent.parent / "raw" / "team_id_map.csv"
+    engine, team_id_mapping_exists = validate_db_and_table("TeamIdMapping")
+    if not team_id_mapping_exists:
+        upload_team_id_map(team_id_path)
+
     #################### DAILY UPDATES #####################################
 
     # update tables
-    logger.info(f"Updating Statcast")
+    logger.info("Updating Statcast")
     update_statcast_table()
 
-    logger.info(f"Updating VenueGamePkMapping")
+    logger.info("Updating VenueGamePkMapping")
     update_venue_game_pk_mapping()
 
-    logger.info(f"Updating TeamOAA")
+    logger.info("Updating TeamOAA")
     update_oaa()
 
-    logger.info(f"Updating PlayerSpeed")
+    logger.info("Updating PlayerSpeed")
     update_run_speed()
 
     #################### MONTHLY UPDATES ###################################
-    if datetime.now().day == 22:
+    if datetime.now().day == 1:
         logger.info("Running Monthly Updates. This will take a while")
 
         logger.info("Updating player name mapping")
@@ -571,7 +593,7 @@ def main():
         logger.info("Updating BatterStrikePctByPitchType and BatterAvgWobaByPitchType")
         update_woba_strike_tables()
 
-        logger.info(f"Updating BatterStrikezoneLookup")
+        logger.info("Updating BatterStrikezoneLookup")
         update_sz_lookup()
 
     #################### OUTDATED ##########################################

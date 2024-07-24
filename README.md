@@ -12,8 +12,9 @@ Todo:
     - more balls will be thrown if count is 0-2 for ex, but not currently a factor
  - add logic to track simulation box scores / player statistics
     - as of now just the game score
- - optimize simulations to increase speed (cprofile)
- - 
+ - current bottlenecks:
+    - fitting hit outcome
+    - predict_proba
 
 ## Getting Started
 

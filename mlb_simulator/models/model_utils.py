@@ -11,7 +11,13 @@ import numpy as np
 import pandas as pd
 import logging
 from copy import deepcopy
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import (
+    StandardScaler,
+    OneHotEncoder,
+    LabelEncoder,
+    MinMaxScaler,
+    OrdinalEncoder,
+)
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, ParameterGrid
@@ -154,14 +160,30 @@ def categorical_model_pipeline(model, data, target_col):
     numeric_features = features.select_dtypes(include=["float64", "int64"]).columns
     categorical_features = features.select_dtypes(include=["object"]).columns
 
+    # preprocessor = ColumnTransformer(
+    #     transformers=[
+    #         ("num", StandardScaler(), numeric_features),
+    #         ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+    #     ]
+    # )
+
     preprocessor = ColumnTransformer(
         transformers=[
-            ("num", StandardScaler(), numeric_features),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+            ("num", MinMaxScaler(), numeric_features),
+            (
+                "cat",
+                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+                categorical_features,
+            ),
         ]
     )
 
-    model = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", model())])
+    model = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("classifier", model(tree_method="hist", enable_categorical=True)),
+        ]
+    )
 
     return deepcopy(model), deepcopy(le), features, target
 

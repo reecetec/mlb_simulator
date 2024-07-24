@@ -41,10 +41,10 @@ class PitchCharacteristics:
             {', '.join(_pitch_characteristics)}
             from Statcast
             where pitcher={self.pitcher_id} and
-            stand="{opposing_stance}" and
-            pitch_type="{pitch_type}"
+            stand='{opposing_stance}' and
+            pitch_type='{pitch_type}'
             and
-            {' & '.join(_pitch_characteristics)} 
+            {' is not null and '.join(_pitch_characteristics)} 
             is not null
             """
         )

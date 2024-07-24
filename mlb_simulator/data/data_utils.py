@@ -16,8 +16,11 @@ def get_db_location() -> str:
     """
 
     home_dir = pathlib.Path.home()
+    # db_path = os.path.join(
+    #     home_dir, "sports", "mlb_simulator", "data", "databases", "mlb.db"
+    # )
     db_path = os.path.join(
-        home_dir, "sports", "mlb_simulator", "data", "databases", "mlb.db"
+        home_dir, "sports", "mlb_simulator", "data", "databases", "mlb.duckdb"
     )
     return db_path
 
@@ -60,7 +63,8 @@ def get_mlb_db_engine() -> engine.Engine:
 
     try:
         db_path = get_db_location()
-        engine = create_engine(f"sqlite:///{db_path}", echo=False)
+        # engine = create_engine(f"sqlite:///{db_path}", echo=False)
+        engine = create_engine(f"duckdb:///{db_path}", echo=False)
     except Exception as e:
         print(f"Error creating engine: {e}")
         raise

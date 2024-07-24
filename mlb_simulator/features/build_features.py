@@ -103,9 +103,13 @@ def get_hit_classification_data(venue_id, backtest_date=None):
     WHERE game_pk in ({sql_game_pks})
     and game_year > 2020
     and type='X'
-    and simplified_outcome &
-    game_year & outs_when_up & of_fielding_alignment &
-    launch_speed & launch_angle & spray_angle is not null
+    and simplified_outcome IS NOT NULL
+    AND game_year IS NOT NULL
+    AND outs_when_up IS NOT NULL
+    AND of_fielding_alignment IS NOT NULL
+    AND launch_speed IS NOT NULL
+    AND launch_angle IS NOT NULL
+    AND spray_angle IS NOT NULL
     {backtest_date}
     ORDER BY GAME_DATE ASC;
     """
@@ -165,7 +169,7 @@ def get_pitch_sequencing_data(pitcher, backtest_date=None):
         select distinct pitch_type from (
         select pitch_type 
         from Statcast 
-        where pitcher = "{pitcher}"
+        where pitcher = '{pitcher}'
         and pitch_type <> 'PO'
         and pitch_type is not null
         and game_type <> 'E' || 'S' /* avoid games with likely 
@@ -244,14 +248,12 @@ def get_hit_outcome_data(batter_id: int | None, backtest_date=None) -> pd.DataFr
          if batter_id is not None else 
          "where stand='R' and sz_top >= 3.3 and sz_top <= 3.5 and sz_bot <= 1.7 and sz_bot >= 1.5"}
         and description = 'hit_into_play'
-        and
-            launch_speed &
-            launch_angle &
-            spray_angle    
-        is not null
+        and launch_speed is not null
+        and launch_angle is not null
+        and spray_angle is not null
         {backtest_date}
         {'order by game_date asc, at_bat_number asc, pitch_number asc' if batter_id is not None else ''}
-        {'limit 25000' if batter_id is None else ''};
+        {'limit 2500' if batter_id is None else ''};
     """
 
     data = query_mlb_db(query_str)
@@ -310,7 +312,7 @@ def get_pitch_outcome_data(
         {f"where batter={batter_id}" 
          if batter_id is not None else 
          "where stand='R' and sz_top >= 3.3 and sz_top <= 3.5 and sz_bot <= 1.7 and sz_bot >= 1.5"}
-        and {' & '.join(PITCH_OUTCOME_FEATURES)} 
+        and {' is not null and '.join(PITCH_OUTCOME_FEATURES)} 
         is not null
         {backtest_date}
         {'order by game_date asc, at_bat_number asc, pitch_number asc' if batter_id is not None else ''}

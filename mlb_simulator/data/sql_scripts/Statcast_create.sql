@@ -96,12 +96,4 @@ CREATE TABLE "Statcast" (
 
 CREATE INDEX idx_statcast_pitcher ON Statcast(pitcher);
 CREATE INDEX idx_statcast_batter ON Statcast(batter);
-CREATE INDEX idx_statcast_stand ON Statcast (stand);
-CREATE INDEX idx_statcast_sz_top ON Statcast (sz_top);
-CREATE INDEX idx_statcast_sz_bot ON Statcast (sz_bot);
-CREATE INDEX idx_statcast_description ON Statcast (description);
-CREATE INDEX idx_statcast_launch_speed ON Statcast (launch_speed);
-CREATE INDEX idx_statcast_launch_angle ON Statcast (launch_angle);
 CREATE INDEX idx_statcast_game_date ON Statcast (game_date);
-CREATE INDEX idx_statcast_at_bat_number ON Statcast (at_bat_number);
-CREATE INDEX idx_statcast_pitch_number ON Statcast (pitch_number);

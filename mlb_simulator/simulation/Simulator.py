@@ -32,14 +32,16 @@ class Simulator:
         """
         Run simulation for desired number of innings
         """
+        print(f"Running {num_simulations} sims for {self.game}")
         for _ in tqdm(range(num_simulations)):
             try:
                 for _ in range(innings):
                     self.simulate_inning()
                 #  process score
                 self.scores.append(self.state.score)
-            except Exception as e:
-                print(e)
+            except Exception as _:
+                # print(f"Exception: {e}")
+                pass
             # reset game state for next simulations
             self.game.reset()
             self.state.reset()
